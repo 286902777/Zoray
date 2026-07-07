@@ -195,9 +195,7 @@ final class LoginViewController: BaseViewController {
 
 extension LoginViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-         // 让当前输入框放弃第一响应者，键盘即收起
          textField.resignFirstResponder()
-         // 返回 true 表示允许按下按钮后的默认行为
          return true
      }
 }

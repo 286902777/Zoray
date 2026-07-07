@@ -7,7 +7,7 @@ final class PrivacyAgreementViewController: BaseViewController {
     }
 
     private func setupUI() {
-        addCustomNavigationBar(title: "隐私协议", showsBackButton: true)
+        addCustomNavigationBar(title: "Privacy Policy", showsBackButton: true)
 
         let scrollView = UIScrollView()
         let contentLabel = UILabel()
@@ -17,17 +17,17 @@ final class PrivacyAgreementViewController: BaseViewController {
         contentLabel.font = .systemFont(ofSize: 15)
         contentLabel.textColor = .label
         contentLabel.text = """
-        Zoray 隐私协议
+        Zoray Privacy Policy
 
-        1. 本地账号信息、帖子、漂流瓶和消息会保存在本机 Realm 数据库中。
+        1. Local account information, posts, bottles, and messages are stored in the local Realm database on this device.
 
-        2. 游客登录会创建本地游客账号，用于体验应用内功能。
+        2. Guest login creates a local guest account for trying in-app features.
 
-        3. 当前版本不接入短信、邮箱或远程服务器，不会主动上传你的本地数据。
+        3. This version does not connect to SMS, email, or remote servers, and it does not actively upload your local data.
 
-        4. 你发布的帖子、漂流瓶、评论和消息仅用于本地功能展示。
+        4. Posts, bottles, comments, and messages you create are used only for local feature display.
 
-        5. 后续如接入网络服务，应在更新协议后再次征得你的同意。
+        5. If network services are added later, this policy should be updated and your consent should be requested again.
         """
 
         view.addSubview(scrollView)

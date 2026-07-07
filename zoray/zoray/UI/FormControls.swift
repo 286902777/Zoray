@@ -85,11 +85,11 @@ final class PrivacyAgreementView: UIView {
         checkboxButton.setImage(UIImage(systemName: "circle"), for: .normal)
         checkboxButton.addTarget(self, action: #selector(toggle), for: .touchUpInside)
 
-        label.text = "我已阅读并同意"
+        label.text = "I have read and agree to the"
         label.font = .systemFont(ofSize: 13)
         label.textColor = .secondaryLabel
 
-        agreementButton.setTitle("隐私协议", for: .normal)
+        agreementButton.setTitle("Privacy Policy", for: .normal)
         agreementButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
 
         addSubview(checkboxButton)

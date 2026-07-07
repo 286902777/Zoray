@@ -309,8 +309,8 @@ final class ProfileViewController: BaseViewController {
     private func reloadUser() {
         guard let user = AuthService.shared.currentUser() else {
             latestWorkPost = nil
-            nameLabel.text = "未登录"
-            workNameLabel.text = "未登录"
+            nameLabel.text = "Not signed in"
+            workNameLabel.text = "Not signed in"
             worksValueLabel.text = "0"
             followingValueLabel.text = "0"
             followerValueLabel.text = "0"
@@ -319,7 +319,7 @@ final class ProfileViewController: BaseViewController {
             return
         }
 
-        let userTypeText = AuthService.shared.currentLoginUserType() == .guest ? " · 游客" : ""
+        let userTypeText = AuthService.shared.currentLoginUserType() == .guest ? " · Guest" : ""
         let posts = DatabaseService.shared.posts(authorIds: [user.id])
         nameLabel.text = "\(user.displayName)\(userTypeText)"
         workNameLabel.text = user.displayName
