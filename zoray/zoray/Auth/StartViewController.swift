@@ -175,6 +175,12 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
             return
         }
 
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.performGuestLogin()
+        }
+    }
+
+    private func performGuestLogin() {
         do {
             try AuthService.shared.loginAsGuest()
             AppRootController.shared.showMain(in: view.window)

@@ -7,6 +7,7 @@ final class MainTabBarController: UITabBarController {
     private let stackView = UIStackView()
     private let uploadButton = UIButton(type: .custom)
     private var tabButtons: [UIButton] = []
+    private var isCustomTabBarHidden = false
     private let tabItems: [CustomTabItem] = [
         CustomTabItem(index: 0, normalImageName: "index_un", selectedImageName: "index"),
         CustomTabItem(index: 1, normalImageName: "fund_un", selectedImageName: "fund"),
@@ -30,7 +31,7 @@ final class MainTabBarController: UITabBarController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         tabBar.isHidden = true
-        if !customTabBarView.isHidden {
+        if !isCustomTabBarHidden {
             view.bringSubviewToFront(customTabBarView)
         }
     }
@@ -49,6 +50,8 @@ final class MainTabBarController: UITabBarController {
 
     private func setupCustomTabBar() {
         customTabBarView.backgroundColor = UIColor.clear
+        customTabBarView.alpha = 1
+        customTabBarView.transform = .identity
         view.addSubview(customTabBarView)
         customTabBarView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
@@ -107,8 +110,12 @@ final class MainTabBarController: UITabBarController {
 
     private func makeTab(root: UIViewController, title: String = "") -> UIViewController {
         let navigationController = BaseNavigationController(rootViewController: root)
+        navigationController.willShowViewController = { [weak self] navigationController, _, animated in
+            let shouldHide = navigationController.viewControllers.count > 1
+            self?.setCustomTabBarHidden(shouldHide, animated: animated && !shouldHide)
+        }
         navigationController.didShowViewController = { [weak self] navigationController, _, _ in
-            self?.setCustomTabBarHidden(navigationController.viewControllers.count > 1)
+            self?.setCustomTabBarHidden(navigationController.viewControllers.count > 1, animated: false)
         }
         navigationController.tabBarItem = UITabBarItem(title: title, image: nil, selectedImage: nil)
         return navigationController
@@ -131,7 +138,7 @@ final class MainTabBarController: UITabBarController {
         }
 
         if let navigationController = selectedViewController as? UINavigationController {
-            setCustomTabBarHidden(navigationController.viewControllers.count > 1)
+            setCustomTabBarHidden(navigationController.viewControllers.count > 1, animated: false)
         }
     }
 
@@ -145,8 +152,43 @@ final class MainTabBarController: UITabBarController {
         present(uploadViewController, animated: true)
     }
 
-    private func setCustomTabBarHidden(_ isHidden: Bool) {
-        customTabBarView.isHidden = isHidden
+    private func setCustomTabBarHidden(_ isHidden: Bool, animated: Bool = true) {
+        guard isHidden != isCustomTabBarHidden else { return }
+        isCustomTabBarHidden = isHidden
+
+        if !isHidden {
+            customTabBarView.isHidden = false
+            view.bringSubviewToFront(customTabBarView)
+        }
+
+        customTabBarView.isUserInteractionEnabled = !isHidden
+        let duration: TimeInterval = animated ? (isHidden ? 0.12 : 0.2) : 0
+        let animations = {
+            self.customTabBarView.alpha = isHidden ? 0 : 1
+            self.customTabBarView.transform = isHidden
+                ? CGAffineTransform(translationX: 0, y: 18).scaledBy(x: 0.98, y: 0.98)
+                : .identity
+        }
+
+        guard duration > 0 else {
+            animations()
+            customTabBarView.isHidden = isHidden
+            return
+        }
+
+        UIView.animate(
+            withDuration: duration,
+            delay: 0,
+            usingSpringWithDamping: isHidden ? 1 : 0.9,
+            initialSpringVelocity: isHidden ? 0 : 0.2,
+            options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseInOut],
+            animations: {
+            animations()
+            },
+            completion: { _ in
+                self.customTabBarView.isHidden = isHidden
+            }
+        )
     }
 }
 

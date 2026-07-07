@@ -319,7 +319,7 @@ final class ProfileViewController: BaseViewController {
             return
         }
 
-        let userTypeText = AuthService.shared.currentLoginUserType() == .guest ? " · Guest" : ""
+        let userTypeText = AuthService.shared.currentLoginUserType() == .guest ? "" : ""
         let posts = DatabaseService.shared.posts(authorIds: [user.id])
         nameLabel.text = "\(user.displayName)\(userTypeText)"
         workNameLabel.text = user.displayName

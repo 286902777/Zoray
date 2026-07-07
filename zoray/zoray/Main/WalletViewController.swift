@@ -230,6 +230,7 @@ private final class WalletPackageView: UIControl {
     var onTap: ((WalletPackage) -> Void)?
 
     private let package: WalletPackage
+    private let contentStackView = UIStackView()
     private let iconImageView = UIImageView(image: UIImage(named: "stone_s"))
     private let amountLabel = UILabel()
     private let priceLabel = UILabel()
@@ -252,22 +253,27 @@ private final class WalletPackageView: UIControl {
         layer.cornerRadius = 14
         layer.masksToBounds = true
 
-        iconImageView.contentMode = .scaleAspectFit
-        addSubview(iconImageView)
-        iconImageView.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(12)
+        contentStackView.axis = .horizontal
+        contentStackView.alignment = .center
+        contentStackView.spacing = 6
+        addSubview(contentStackView)
+        contentStackView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
             make.top.equalToSuperview().offset(12)
+            make.leading.greaterThanOrEqualToSuperview().offset(8)
+            make.trailing.lessThanOrEqualToSuperview().offset(-8)
+        }
+
+        iconImageView.contentMode = .scaleAspectFit
+        contentStackView.addArrangedSubview(iconImageView)
+        iconImageView.snp.makeConstraints { make in
             make.width.height.equalTo(18)
         }
 
+        amountLabel.textAlignment = .center
         amountLabel.textColor = .white
         amountLabel.font = .systemFont(ofSize: 13, weight: .bold)
-        addSubview(amountLabel)
-        amountLabel.snp.makeConstraints { make in
-            make.leading.equalTo(iconImageView.snp.trailing).offset(8)
-            make.centerY.equalTo(iconImageView)
-            make.trailing.lessThanOrEqualToSuperview().offset(-8)
-        }
+        contentStackView.addArrangedSubview(amountLabel)
 
         priceLabel.textColor = UIColor.white.withAlphaComponent(0.72)
         priceLabel.font = .systemFont(ofSize: 10, weight: .medium)

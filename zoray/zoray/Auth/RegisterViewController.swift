@@ -117,13 +117,22 @@ final class RegisterViewController: BaseViewController {
     }
 
     @objc private func register() {
+        registerButton.isEnabled = false
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.performRegister()
+        }
+    }
+
+    private func performRegister() {
+        registerButton.isEnabled = true
         do {
-            try AuthService.shared.register(
+            let user = try AuthService.shared.register(
                 email: usernameField.text ?? "",
                 password: passwordField.text ?? "",
                 confirmPassword: confirmPasswordField.text ?? ""
             )
-            AppRootController.shared.showMain(in: view.window)
+            let viewController = PersonalInformationViewController(userId: user.id)
+            navigationController?.pushViewController(viewController, animated: true)
         } catch {
             showAlert(message: errorMessage(from: error))
         }

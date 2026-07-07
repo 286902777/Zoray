@@ -331,17 +331,14 @@ final class HomeViewController: BaseViewController {
             return
         }
 
-        do {
+        let bottleUser = DatabaseService.shared.user(id: bottle.userId)
+        let viewController = CatchBottleViewController(bottle: bottle, user: bottleUser)
+        viewController.onThrowOut = { [weak self] in
             _ = try BalanceService.shared.consumeCatchBottleChance(for: userId)
-            reloadRemainingTimes()
-
-            let bottleUser = DatabaseService.shared.user(id: bottle.userId)
-            let viewController = CatchBottleViewController(bottle: bottle, user: bottleUser)
-            viewController.modalPresentationStyle = .overFullScreen
-            present(viewController, animated: true)
-        } catch {
-            showToast(errorMessage(from: error), position: .bottom)
+            self?.reloadRemainingTimes()
         }
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: true)
     }
 
     private func showLoginPromptIfNeeded() -> Bool {

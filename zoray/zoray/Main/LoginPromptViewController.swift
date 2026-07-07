@@ -104,9 +104,13 @@ final class LoginPromptViewController: BaseViewController {
 
     @objc private func login() {
         let currentWindow = view.window
-        dismiss(animated: true) {
+        loginButton.isEnabled = false
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            guard let self else { return }
             AuthService.shared.logout()
-            AppRootController.shared.showLogin(in: currentWindow)
+            self.dismiss(animated: true) {
+                AppRootController.shared.showLogin(in: currentWindow)
+            }
         }
     }
 }

@@ -7,6 +7,9 @@ final class UserObject: Object {
     @Persisted var email: String
     @Persisted var displayName: String
     @Persisted var avatarFileName: String?
+    @Persisted var birthday: String
+    @Persisted var location: String
+    @Persisted var gender: String
     @Persisted var password: String
     @Persisted var isGuest: Bool
     @Persisted var followingUserIds: List<String>

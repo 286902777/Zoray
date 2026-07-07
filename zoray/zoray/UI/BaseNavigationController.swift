@@ -1,6 +1,7 @@
 import UIKit
 
 final class BaseNavigationController: UINavigationController, UIGestureRecognizerDelegate, UINavigationControllerDelegate {
+    var willShowViewController: ((UINavigationController, UIViewController, Bool) -> Void)?
     var didShowViewController: ((UINavigationController, UIViewController, Bool) -> Void)?
 
     override func viewDidLoad() {
@@ -16,6 +17,10 @@ final class BaseNavigationController: UINavigationController, UIGestureRecognize
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         viewControllers.count > 1
+    }
+
+    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+        willShowViewController?(navigationController, viewController, animated)
     }
 
     func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {

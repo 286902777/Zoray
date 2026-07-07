@@ -7,6 +7,9 @@ enum AvatarImageLoader {
 
     static func avatarImageName(for user: UserObject?) -> String {
         guard let user else { return "user_icon" }
+        if user.isGuest {
+            return "guest_icon"
+        }
         if let avatarFileName = user.avatarFileName?.trimmingCharacters(in: .whitespacesAndNewlines),
            !avatarFileName.isEmpty {
             return avatarFileName

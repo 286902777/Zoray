@@ -48,15 +48,12 @@ final class ForgotPasswordViewController: BaseViewController {
     private func setupForm() {
         formContainerView.backgroundColor = UIColor(red: 0.07, green: 0.09, blue: 0.24, alpha: 1)
         formContainerView.layer.cornerRadius = 18
-        formContainerView.layer.borderWidth = 2
-        formContainerView.layer.borderColor = UIColor(red: 0.22, green: 0.42, blue: 1, alpha: 1).cgColor
         formContainerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         formContainerView.layer.masksToBounds = true
         view.addSubview(formContainerView)
         formContainerView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(62)
-            make.leading.equalToSuperview().offset(16)
-            make.trailing.equalToSuperview().offset(-16)
+            make.leading.trailing.equalToSuperview().offset(16)
             make.bottom.equalToSuperview()
         }
 
@@ -121,6 +118,14 @@ final class ForgotPasswordViewController: BaseViewController {
     }
 
     @objc private func resetPassword() {
+        saveButton.isEnabled = false
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.performResetPassword()
+        }
+    }
+
+    private func performResetPassword() {
+        saveButton.isEnabled = true
         do {
             try AuthService.shared.resetPassword(
                 email: usernameField.text ?? "",

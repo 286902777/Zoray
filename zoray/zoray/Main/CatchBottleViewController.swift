@@ -2,6 +2,8 @@ import SnapKit
 import UIKit
 
 final class CatchBottleViewController: BaseViewController {
+    var onThrowOut: (() throws -> Void)?
+
     private var displayedBottle: BottleObject?
     private var displayedUser: UserObject?
 
@@ -65,10 +67,9 @@ final class CatchBottleViewController: BaseViewController {
         cardView.isUserInteractionEnabled = true
         view.addSubview(cardView)
         cardView.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.centerY.equalToSuperview().offset(-6)
+            make.center.equalToSuperview()
             make.width.equalTo(274)
-            make.height.equalTo(312)
+            make.height.equalTo(406)
             make.leading.greaterThanOrEqualToSuperview().offset(24)
             make.trailing.lessThanOrEqualToSuperview().offset(-24)
         }
@@ -148,7 +149,7 @@ final class CatchBottleViewController: BaseViewController {
         replyContainerView.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(16)
             make.leading.trailing.equalToSuperview().inset(22)
-            make.height.equalTo(112)
+            make.height.equalTo(160)
         }
 
         replyTextView.backgroundColor = .clear
@@ -185,8 +186,9 @@ final class CatchBottleViewController: BaseViewController {
         configureCancelButton()
         bottomContentView.addSubview(cancelButton)
         cancelButton.snp.makeConstraints { make in
+            make.top.equalTo(replyContainerView.snp.bottom).offset(16)
             make.leading.equalToSuperview().offset(22)
-            make.bottom.equalToSuperview().offset(-16)
+            make.bottom.lessThanOrEqualToSuperview().offset(-16)
             make.width.equalTo(88)
             make.height.equalTo(50)
         }
@@ -285,7 +287,16 @@ final class CatchBottleViewController: BaseViewController {
     @objc private func throwOut() {
         view.endEditing(true)
         LoadingView.show(in: view, message: "Loading...") { [weak self] in
-            self?.dismiss(animated: true) {
+            guard let self else { return }
+
+            do {
+                try self.onThrowOut?()
+            } catch {
+                self.showToast(self.errorMessage(from: error), position: .bottom)
+                return
+            }
+
+            self.dismiss(animated: true) {
                 ToastView.show(message: "Bottle thrown out.", in: UIApplication.shared.catchBottleToastView)
             }
         }

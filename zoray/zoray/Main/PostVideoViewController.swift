@@ -58,6 +58,8 @@ final class PostVideoViewController: BaseViewController {
     private let player: AVPlayer
     private let playerLayer: AVPlayerLayer
     private var isPlaybackActive = false
+    private var hasPlaybackEnded = false
+    private var hidePlaybackControlWorkItem: DispatchWorkItem?
 
     init(postId: String? = nil, userName: String, body: String, videoURL: URL) {
         self.postId = postId
@@ -81,6 +83,7 @@ final class PostVideoViewController: BaseViewController {
         reloadAuthorAvatar()
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidUpdate), name: .zorayUserProfileDidUpdate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleBlockedUsersDidChange), name: .zorayBlockedUsersDidChange, object: nil)
+        observePlaybackDidEnd()
         startAutoplay()
     }
 
@@ -91,6 +94,7 @@ final class PostVideoViewController: BaseViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        hidePlaybackControlWorkItem?.cancel()
         player.pause()
         isPlaybackActive = false
     }
@@ -297,23 +301,48 @@ final class PostVideoViewController: BaseViewController {
     }
 
     @objc private func togglePlayback() {
+        hidePlaybackControlWorkItem?.cancel()
+
+        if hasPlaybackEnded {
+            player.seek(to: .zero) { [weak self] _ in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.hasPlaybackEnded = false
+                    self.player.play()
+                    self.isPlaybackActive = true
+                    self.updatePlayButtonImage()
+                    self.showPlaybackControlTemporarily()
+                }
+            }
+            return
+        }
+
         if isPlaybackActive {
             player.pause()
             isPlaybackActive = false
+            updatePlayButtonImage()
+            showPlaybackControl()
         } else {
             player.play()
             isPlaybackActive = true
+            updatePlayButtonImage()
+            showPlaybackControlTemporarily()
         }
-        updatePlayButtonImage()
-        playButton.isHidden = false
     }
 
     @objc private func showPlaybackControl() {
+        hidePlaybackControlWorkItem?.cancel()
+        playButton.layer.removeAllAnimations()
+        playButton.alpha = 1
         updatePlayButtonImage()
         playButton.isHidden = false
+        if isPlaybackActive && !hasPlaybackEnded {
+            schedulePlaybackControlAutoHide()
+        }
     }
 
     private func startAutoplay() {
+        hasPlaybackEnded = false
         player.play()
         isPlaybackActive = true
         updatePlayButtonImage()
@@ -323,6 +352,48 @@ final class PostVideoViewController: BaseViewController {
     private func updatePlayButtonImage() {
         let imageName = isPlaybackActive ? "pause.fill" : "play.fill"
         playButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+
+    private func showPlaybackControlTemporarily() {
+        playButton.layer.removeAllAnimations()
+        playButton.alpha = 1
+        updatePlayButtonImage()
+        playButton.isHidden = false
+        schedulePlaybackControlAutoHide()
+    }
+
+    private func schedulePlaybackControlAutoHide() {
+        hidePlaybackControlWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self, self.isPlaybackActive, !self.hasPlaybackEnded else { return }
+            UIView.animate(withDuration: 0.18) {
+                self.playButton.alpha = 0
+            } completion: { _ in
+                guard self.isPlaybackActive, !self.hasPlaybackEnded else { return }
+                self.playButton.isHidden = true
+                self.playButton.alpha = 1
+            }
+        }
+        hidePlaybackControlWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5, execute: workItem)
+    }
+
+    private func observePlaybackDidEnd() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePlaybackDidEnd),
+            name: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem
+        )
+    }
+
+    @objc private func handlePlaybackDidEnd() {
+        hidePlaybackControlWorkItem?.cancel()
+        hasPlaybackEnded = true
+        isPlaybackActive = false
+        updatePlayButtonImage()
+        playButton.alpha = 1
+        playButton.isHidden = false
     }
 
     private func updateLikeButtonState() {

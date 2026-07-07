@@ -7,6 +7,7 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
     private let backgroundImageView = UIImageView(image: UIImage(named: "me_head"))
     private let titleLabel = UILabel()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
+    private let emptyView = ZREmptyView()
     private var hasShownInitialLoading = false
 
     override func viewDidLoad() {
@@ -58,14 +59,21 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(MessageCardCell.self, forCellWithReuseIdentifier: MessageCardCell.reuseIdentifier)
+        emptyView.isHidden = true
+
         view.addSubview(contentView)
         contentView.addSubview(collectionView)
+        contentView.addSubview(emptyView)
         contentView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(28)
             make.leading.trailing.bottom.equalToSuperview()
         }
         collectionView.snp.makeConstraints { make in
             make.top.equalTo(28)
+            make.leading.trailing.bottom.equalToSuperview()
+        }
+        emptyView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(28)
             make.leading.trailing.bottom.equalToSuperview()
         }
     }
@@ -101,6 +109,12 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
         }
 
         collectionView.reloadData()
+        updateEmptyView()
+    }
+
+    private func updateEmptyView() {
+        emptyView.isHidden = !messages.isEmpty
+        collectionView.isHidden = messages.isEmpty
     }
 
     private func showInitialLoadingIfNeeded() {
@@ -161,7 +175,7 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
             peerUserId: message.peerUserId,
             peerAvatarImageName: message.avatarImageName
         )
-        navigationController?.pushViewController(detailViewController, animated: false)
+        navigationController?.pushViewController(detailViewController, animated: true)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {

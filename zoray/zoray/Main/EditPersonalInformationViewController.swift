@@ -149,7 +149,13 @@ final class EditPersonalInformationViewController: BaseViewController, PHPickerV
                 displayName: displayName,
                 avatarFileName: selectedAvatarFileName
             )
-            showToast("Saved successfully.", position: .bottom)
+            dismiss(animated: true) {
+                let toastView = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap(\.windows)
+                    .first { $0.isKeyWindow } ?? UIView()
+                ToastView.show(message: "Saved successfully.", in: toastView)
+            }
         } catch {
             showToast(errorMessage(from: error), position: .bottom)
         }

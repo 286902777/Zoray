@@ -331,7 +331,8 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
             return CGSize(width: 162, height: 124)
         }
 
-        return CGSize(width: collectionView.bounds.width - 48, height: 254)
+        let width = collectionView.bounds.width - 48
+        return CGSize(width: width, height: ceil(width * 0.62) + 48)
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -615,7 +616,7 @@ private final class PostCardCell: UICollectionViewCell {
         postImageView.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(12)
             make.leading.trailing.equalToSuperview()
-            make.height.equalTo(180)
+            make.height.equalTo(postImageView.snp.width).multipliedBy(0.62)
         }
 
         postImageView.addSubview(playView)

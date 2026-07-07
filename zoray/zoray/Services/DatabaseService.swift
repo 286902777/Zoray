@@ -192,7 +192,14 @@ final class DatabaseService {
         return realm.object(ofType: UserObject.self, forPrimaryKey: id)
     }
 
-    func updateUserProfile(userId: String, displayName: String? = nil, avatarFileName: String? = nil) throws {
+    func updateUserProfile(
+        userId: String,
+        displayName: String? = nil,
+        avatarFileName: String? = nil,
+        birthday: String? = nil,
+        location: String? = nil,
+        gender: String? = nil
+    ) throws {
         let realm = try realm()
         guard let user = realm.object(ofType: UserObject.self, forPrimaryKey: userId) else {
             throw DatabaseError.writeFailed
@@ -205,6 +212,15 @@ final class DatabaseService {
                 }
                 if let avatarFileName {
                     user.avatarFileName = avatarFileName
+                }
+                if let birthday {
+                    user.birthday = birthday
+                }
+                if let location {
+                    user.location = location
+                }
+                if let gender {
+                    user.gender = gender
                 }
                 user.updatedAt = Date()
             }
@@ -536,7 +552,8 @@ final class DatabaseService {
             let shouldSeedPosts = realm.objects(PostObject.self).isEmpty
             let shouldSeedBottles = realm.objects(BottleObject.self).isEmpty
             let shouldSeedMessages = realm.objects(MessageObject.self).isEmpty
-            guard shouldSeedPosts || shouldSeedBottles || shouldSeedMessages else { return }
+            let shouldRepairSeedMessageFollows = seedMessageUsersNeedMutualFollow(in: realm)
+            guard shouldSeedPosts || shouldSeedBottles || shouldSeedMessages || shouldRepairSeedMessageFollows else { return }
 
             try realm.write {
                 if shouldSeedPosts {
@@ -569,6 +586,8 @@ final class DatabaseService {
 
                 if shouldSeedMessages {
                     seedInitialMessages(in: realm)
+                } else if shouldRepairSeedMessageFollows {
+                    ensureSeedMessageUsersMutuallyFollow(in: realm)
                 }
             }
         } catch {
@@ -580,6 +599,8 @@ final class DatabaseService {
         let sienna = seedUser(named: "Sienna", avatarFileName: "Sienna.jpg", in: realm)
         seedMessages.enumerated().forEach { index, data in
             let peerUser = seedUser(named: data.peerUserName, avatarFileName: "\(data.peerUserName).jpg", in: realm)
+            ensureMutualFollow(between: sienna, and: peerUser)
+
             let message = MessageObject()
             message.id = "seed-message-sienna-\(data.peerUserName.lowercased())-\(index)"
             message.senderId = data.isFromSienna ? sienna.id : peerUser.id
@@ -590,6 +611,67 @@ final class DatabaseService {
             message.isRead = data.isFromSienna
             message.createdAt = Date().addingTimeInterval(TimeInterval(index * 60))
             realm.add(message, update: .modified)
+        }
+    }
+
+    private func ensureSeedMessageUsersMutuallyFollow(in realm: Realm) {
+        guard let sienna = realm.objects(UserObject.self).where({ $0.username == "sienna" }).first else {
+            return
+        }
+
+        Set(seedMessages.map(\.peerUserName)).forEach { peerUserName in
+            guard let peerUser = realm.objects(UserObject.self).where({ $0.username == peerUserName.lowercased() }).first else {
+                return
+            }
+            ensureMutualFollow(between: sienna, and: peerUser)
+        }
+    }
+
+    private func seedMessageUsersNeedMutualFollow(in realm: Realm) -> Bool {
+        guard let sienna = realm.objects(UserObject.self).where({ $0.username == "sienna" }).first else {
+            return false
+        }
+
+        return Set(seedMessages.map(\.peerUserName)).contains { peerUserName in
+            guard let peerUser = realm.objects(UserObject.self).where({ $0.username == peerUserName.lowercased() }).first else {
+                return false
+            }
+            return !usersMutuallyFollow(sienna, peerUser)
+        }
+    }
+
+    private func usersMutuallyFollow(_ user: UserObject, _ otherUser: UserObject) -> Bool {
+        user.followingUserIds.contains(otherUser.id)
+            && user.followerUserIds.contains(otherUser.id)
+            && otherUser.followingUserIds.contains(user.id)
+            && otherUser.followerUserIds.contains(user.id)
+    }
+
+    private func ensureMutualFollow(between user: UserObject, and otherUser: UserObject) {
+        guard user.id != otherUser.id else { return }
+
+        var didUpdate = false
+        if !user.followingUserIds.contains(otherUser.id) {
+            user.followingUserIds.append(otherUser.id)
+            didUpdate = true
+        }
+        if !user.followerUserIds.contains(otherUser.id) {
+            user.followerUserIds.append(otherUser.id)
+            didUpdate = true
+        }
+        if !otherUser.followingUserIds.contains(user.id) {
+            otherUser.followingUserIds.append(user.id)
+            didUpdate = true
+        }
+        if !otherUser.followerUserIds.contains(user.id) {
+            otherUser.followerUserIds.append(user.id)
+            didUpdate = true
+        }
+
+        if didUpdate {
+            let now = Date()
+            user.updatedAt = now
+            otherUser.updatedAt = now
         }
     }
 
@@ -651,7 +733,7 @@ final class DatabaseService {
 
     private func configure() {
         var config = Realm.Configuration.defaultConfiguration
-        config.schemaVersion = 5
+        config.schemaVersion = 6
         config.migrationBlock = { migration, oldSchemaVersion in
             if oldSchemaVersion < 2 {
                 migration.enumerateObjects(ofType: UserObject.className()) { _, newObject in
@@ -686,6 +768,13 @@ final class DatabaseService {
             if oldSchemaVersion < 5 {
                 migration.enumerateObjects(ofType: UserObject.className()) { _, newObject in
                     newObject?["avatarFileName"] = nil
+                }
+            }
+            if oldSchemaVersion < 6 {
+                migration.enumerateObjects(ofType: UserObject.className()) { _, newObject in
+                    newObject?["birthday"] = ""
+                    newObject?["location"] = ""
+                    newObject?["gender"] = ""
                 }
             }
         }
