@@ -12,18 +12,18 @@ final class WalletViewController: BaseViewController {
     private var isPurchasing = false
 
     private let packages: [WalletPackage] = [
-        WalletPackage(amount: "400", price: "$0.99", productId: "lvbsvhxcgcrvesor"),
-        WalletPackage(amount: "800", price: "$1.99", productId: "dxismgcwewhrtezo"),
-        WalletPackage(amount: "1290", price: "$2.99", productId: "khtxlcejaxmqcsra"),
-        WalletPackage(amount: "2450", price: "$4.99", productId: "yadwwvxspgxwlndb"),
-        WalletPackage(amount: "4900", price: "$9.99", productId: "qnrcuelbtiuflyky"),
-        WalletPackage(amount: "9800", price: "$19.99", productId: "lvbsvhxcgcrvesor"),
-        WalletPackage(amount: "19800", price: "$29.99", productId: "lvbsvhxcgcrvesor"),
-        WalletPackage(amount: "24500", price: "$49.99", productId: "lvbsvhxcgcrvesor"),
-        WalletPackage(amount: "39500", price: "$69.99", productId: "lvbsvhxcgcrvesor"),
-        WalletPackage(amount: "49000", price: "$99.99", productId: "ymohxnvpkqxutvab")
+        WalletPackage(amount: "400", price: "$0.99", productId: "mjeuwwzfvtlxxhyx"),
+        WalletPackage(amount: "800", price: "$1.99", productId: "atrstguztmdvmgif"),
+        WalletPackage(amount: "1290", price: "$2.99", productId: "3"),
+        WalletPackage(amount: "2450", price: "$4.99", productId: "tjfffowogdturgaw"),
+        WalletPackage(amount: "5150", price: "$9.99", productId: "cfhmabdnutsuvnks"),
+        WalletPackage(amount: "10800", price: "$19.99", productId: "zelzabkpgkmwlprl"),
+        WalletPackage(amount: "19800", price: "$29.99", productId: "2"),
+        WalletPackage(amount: "29400", price: "$49.99", productId: "rfdqdszuycclkgre"),
+        WalletPackage(amount: "39500", price: "$69.99", productId: "1"),
+        WalletPackage(amount: "63700", price: "$99.99", productId: "junafdwpeyzvanfx")
     ]
-
+//    ["3.99  1780  kibtegfnvwlsaxsi","14.99  7700  fmravldlhofgsixb","8.99  3950  kefrldtwdiopynog"]
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()

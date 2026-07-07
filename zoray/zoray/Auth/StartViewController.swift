@@ -5,6 +5,7 @@ import UIKit
 final class StartViewController: BaseViewController, UITextViewDelegate {
     private enum AgreementStorage {
         static let eulaAcceptedKey = "zoray.eulaAccepted"
+        static let agreementCheckedKey = "zoray.agreementChecked"
     }
 
     private let backgroundImageView = UIImageView(image: UIImage(named: "main_bg"))
@@ -12,13 +13,14 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
     private let titleLabel = UILabel()
     private let loginButton = ImageBackgroundButton(title: "Login by email")
     private let registerButton = ImageBackgroundButton(title: "I'm new")
-    private let agreementButton = UIButton(type: .system)
+    private let agreementButton = UIButton(type: .custom)
     private let agreementTextView = UITextView()
 
     private var isAgreementChecked = false {
         didSet {
             let imageName = isAgreementChecked ? "done" : ""
             agreementButton.setImage(UIImage(named: imageName), for: .normal)
+            UserDefaults.standard.setValue(isAgreementChecked, forKey: AgreementStorage.agreementCheckedKey)
         }
     }
 
@@ -41,7 +43,7 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
         setupBrand()
         setupButtons()
         setupAgreement()
-        isAgreementChecked = UserDefaults.standard.bool(forKey: AgreementStorage.eulaAcceptedKey)
+        isAgreementChecked = UserDefaults.standard.bool(forKey: AgreementStorage.agreementCheckedKey)
     }
 
     private func setupBackground() {
@@ -152,10 +154,10 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
         eulaViewController.onCancel = {
             exit(0)
         }
-        eulaViewController.onAgree = { [weak self] in
+        eulaViewController.onAgree = {
             UserDefaults.standard.set(true, forKey: AgreementStorage.eulaAcceptedKey)
-            self?.isAgreementChecked = true
         }
+
         eulaViewController.modalPresentationStyle = .overFullScreen
         eulaViewController.modalTransitionStyle = .crossDissolve
         present(eulaViewController, animated: true)
