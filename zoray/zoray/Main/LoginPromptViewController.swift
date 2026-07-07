@@ -2,14 +2,21 @@ import SnapKit
 import UIKit
 
 final class LoginPromptViewController: BaseViewController {
+    private let message: String
+    private let primaryButtonTitle: String
     private let dimView = UIView()
     private let dialogView = UIImageView(image: UIImage(named: "alert_bg"))
     private let messageLabel = UILabel()
     private let cancelButton = UIButton(type: .custom)
     private let loginButton = UIButton(type: .custom)
 
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    init(
+        message: String = "To ensure the normal operation of the function, please log in to your account first.",
+        primaryButtonTitle: String = "Log in"
+    ) {
+        self.message = message
+        self.primaryButtonTitle = primaryButtonTitle
+        super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle = .crossDissolve
     }
@@ -43,7 +50,7 @@ final class LoginPromptViewController: BaseViewController {
             make.height.equalTo(248)
         }
 
-        messageLabel.text = "To ensure the normal operation of the function, please log in to your account first."
+        messageLabel.text = message
         messageLabel.textColor = .white
         messageLabel.font = .systemFont(ofSize: 15, weight: .bold)
         messageLabel.textAlignment = .center
@@ -81,7 +88,7 @@ final class LoginPromptViewController: BaseViewController {
     }
 
     private func configureLoginButton() {
-        loginButton.setTitle("Log in", for: .normal)
+        loginButton.setTitle(primaryButtonTitle, for: .normal)
         loginButton.setTitleColor(.white, for: .normal)
         loginButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
 

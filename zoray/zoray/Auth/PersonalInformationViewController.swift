@@ -288,11 +288,20 @@ final class PersonalInformationViewController: BaseViewController, PHPickerViewC
             showToast("Please enter nickname.", position: .bottom)
             return
         }
+        guard hasSelectedAvatar else {
+            showToast("Please select an avatar.", position: .bottom)
+            return
+        }
 
         nextButton.isEnabled = false
         LoadingView.show(in: view, message: "Loading...") { [weak self] in
             self?.saveAndEnterMain(nickname: nickname)
         }
+    }
+
+    private var hasSelectedAvatar: Bool {
+        let avatarFileName = selectedAvatarFileName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !avatarFileName.isEmpty
     }
 
     private func saveAndEnterMain(nickname: String) {

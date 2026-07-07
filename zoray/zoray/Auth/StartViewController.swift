@@ -194,7 +194,8 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
     }
 
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-        navigationController?.pushViewController(PrivacyAgreementViewController(), animated: true)
+        let page: PrivacyAgreementViewController.Page = URL.host == "agreement" ? .userAgreement : .privacyPolicy
+        navigationController?.pushViewController(PrivacyAgreementViewController(page: page), animated: true)
         return false
     }
 }

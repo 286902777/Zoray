@@ -147,6 +147,11 @@ final class MainTabBarController: UITabBarController {
     }
 
     @objc private func selectUpload() {
+        guard !AuthService.shared.isGuestLoggedIn() else {
+            present(LoginPromptViewController(), animated: true)
+            return
+        }
+
         let uploadViewController = BaseNavigationController(rootViewController: UploadViewController())
         uploadViewController.modalPresentationStyle = .overFullScreen
         present(uploadViewController, animated: true)

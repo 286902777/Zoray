@@ -231,6 +231,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = zoray/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Zoray;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zoray needs camera access to capture photos and videos of your cosplays for sharing and profile updates.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Zoray needs microphone access to send voice messages in chats and record audio for your cosplay videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Zoray needs album access to select your favorite photos and videos to share or set as avatars.";
@@ -271,6 +272,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = zoray/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Zoray;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zoray needs camera access to capture photos and videos of your cosplays for sharing and profile updates.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Zoray needs microphone access to send voice messages in chats and record audio for your cosplay videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Zoray needs album access to select your favorite photos and videos to share or set as avatars.";

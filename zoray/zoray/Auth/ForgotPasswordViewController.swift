@@ -133,11 +133,10 @@ final class ForgotPasswordViewController: BaseViewController {
                 confirmPassword: confirmPasswordField.text ?? ""
             )
 
-            let alert = UIAlertController(title: "Notice", message: "Your password has been reset.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Sure", style: .default) { [weak self] _ in
+            showToast("Your password has been reset.")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.navigationController?.popViewController(animated: true)
-            })
-            present(alert, animated: true)
+            }
         } catch {
             showAlert(message: errorMessage(from: error))
         }

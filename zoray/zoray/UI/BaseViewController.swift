@@ -41,9 +41,7 @@ class BaseViewController: UIViewController {
     }
 
     func showAlert(title: String = "title", message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Sure", style: .default))
-        present(alert, animated: true)
+        showToast(message)
     }
 
     func showToast(_ message: String, position: ToastView.Position = .center, duration: TimeInterval = 1.8) {

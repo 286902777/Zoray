@@ -12,6 +12,7 @@ final class EditPersonalInformationViewController: BaseViewController, PHPickerV
     private let usernameTextField = EditProfileTextField(placeholder: "Enter username")
     private let saveButton = EditProfileSaveButton(title: "Save")
     private var selectedAvatarFileName: String?
+    private var selectedAvatarImage: UIImage?
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -142,12 +143,27 @@ final class EditPersonalInformationViewController: BaseViewController, PHPickerV
             showToast("Please enter username.", position: .bottom)
             return
         }
+        guard hasAvatarForSaving() else {
+            showToast("Please select an avatar.", position: .bottom)
+            return
+        }
 
         do {
+            let avatarFileName: String
+            if let selectedAvatarImage {
+                avatarFileName = try saveAvatarImage(selectedAvatarImage)
+                selectedAvatarFileName = avatarFileName
+                self.selectedAvatarImage = nil
+            } else if let existingAvatarFileName = normalizedSelectedAvatarFileName() {
+                avatarFileName = existingAvatarFileName
+            } else {
+                return
+            }
+
             try DatabaseService.shared.updateUserProfile(
                 userId: user.id,
                 displayName: displayName,
-                avatarFileName: selectedAvatarFileName
+                avatarFileName: avatarFileName
             )
             dismiss(animated: true) {
                 let toastView = UIApplication.shared.connectedScenes
@@ -159,6 +175,15 @@ final class EditPersonalInformationViewController: BaseViewController, PHPickerV
         } catch {
             showToast(errorMessage(from: error), position: .bottom)
         }
+    }
+
+    private func hasAvatarForSaving() -> Bool {
+        selectedAvatarImage != nil || normalizedSelectedAvatarFileName() != nil
+    }
+
+    private func normalizedSelectedAvatarFileName() -> String? {
+        let fileName = selectedAvatarFileName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return fileName.isEmpty ? nil : fileName
     }
 
     @objc private func selectAvatar() {
@@ -193,20 +218,8 @@ final class EditPersonalInformationViewController: BaseViewController, PHPickerV
     }
 
     private func saveSelectedAvatar(_ image: UIImage) {
-        guard let user = AuthService.shared.currentUser() else {
-            showToast("Please log in first.", position: .bottom)
-            return
-        }
-
-        do {
-            let fileName = try saveAvatarImage(image)
-            selectedAvatarFileName = fileName
-            avatarImageView.image = image
-            try DatabaseService.shared.updateUserProfile(userId: user.id, avatarFileName: fileName)
-            showToast("Saved successfully.", position: .bottom)
-        } catch {
-            showToast(errorMessage(from: error), position: .bottom)
-        }
+        selectedAvatarImage = image
+        avatarImageView.image = image
     }
 
     private func saveAvatarImage(_ image: UIImage) throws -> String {

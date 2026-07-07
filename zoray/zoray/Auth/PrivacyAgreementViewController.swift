@@ -1,49 +1,66 @@
 import UIKit
+import WebKit
 
 final class PrivacyAgreementViewController: BaseViewController {
+    enum Page {
+        case userAgreement
+        case privacyPolicy
+
+        var title: String {
+            switch self {
+            case .userAgreement:
+                return "User Agreement"
+            case .privacyPolicy:
+                return "Privacy Policy"
+            }
+        }
+
+        var url: URL {
+            switch self {
+            case .userAgreement:
+                return URL(string: "https://sites.google.com/view/zorayapp/index/users")!
+            case .privacyPolicy:
+                return URL(string: "https://sites.google.com/view/zorayapp/index/private")!
+            }
+        }
+    }
+
+    private let page: Page
+    private let webView = WKWebView(frame: .zero)
+
+    init(page: Page = .privacyPolicy) {
+        self.page = page
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        loadPage()
     }
 
     private func setupUI() {
-        addCustomNavigationBar(title: "Privacy Policy", showsBackButton: true)
+        addCustomNavigationBar(title: page.title, showsBackButton: true)
+        view.backgroundColor = .white
 
-        let scrollView = UIScrollView()
-        let contentLabel = UILabel()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        contentLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentLabel.numberOfLines = 0
-        contentLabel.font = .systemFont(ofSize: 15)
-        contentLabel.textColor = .label
-        contentLabel.text = """
-        Zoray Privacy Policy
-
-        1. Local account information, posts, bottles, and messages are stored in the local Realm database on this device.
-
-        2. Guest login creates a local guest account for trying in-app features.
-
-        3. This version does not connect to SMS, email, or remote servers, and it does not actively upload your local data.
-
-        4. Posts, bottles, comments, and messages you create are used only for local feature display.
-
-        5. If network services are added later, this policy should be updated and your consent should be requested again.
-        """
-
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentLabel)
+        webView.backgroundColor = .white
+        webView.scrollView.backgroundColor = .white
+        view.addSubview(webView)
+        webView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: contentTopAnchor(), constant: 12),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            contentLabel.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 24),
-            contentLabel.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -24),
-            contentLabel.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
-            contentLabel.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentLabel.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -48)
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.topAnchor.constraint(equalTo: contentTopAnchor()),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    private func loadPage() {
+        webView.load(URLRequest(url: page.url))
     }
 }

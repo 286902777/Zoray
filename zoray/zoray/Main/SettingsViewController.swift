@@ -87,15 +87,19 @@ final class SettingsViewController: BaseViewController {
     }
 
     @objc private func showPrivacyPolicy() {
-        navigationController?.pushViewController(PrivacyAgreementViewController(), animated: true)
+        navigationController?.pushViewController(PrivacyAgreementViewController(page: .privacyPolicy), animated: true)
     }
 
     @objc private func showUserAgreement() {
-        navigationController?.pushViewController(PrivacyAgreementViewController(), animated: true)
+        navigationController?.pushViewController(PrivacyAgreementViewController(page: .userAgreement), animated: true)
     }
 
     @objc private func logout() {
-        present(LoginPromptViewController(), animated: true)
+        let promptViewController = LoginPromptViewController(
+            message: "Are you sure you want to log out?",
+            primaryButtonTitle: "Log out"
+        )
+        present(promptViewController, animated: true)
     }
 
     @objc private func confirmDeleteAccount() {

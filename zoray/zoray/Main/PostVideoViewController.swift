@@ -171,6 +171,7 @@ final class PostVideoViewController: BaseViewController {
             make.centerY.equalTo(backButton)
             make.width.height.equalTo(32)
         }
+        updateMoreButtonVisibility()
     }
 
     private func setupOverlay() {
@@ -260,6 +261,8 @@ final class PostVideoViewController: BaseViewController {
     }
 
     @objc private func showMore() {
+        guard !isCurrentUserPost else { return }
+
         guard let user = anyAuthorUser() ?? authorUser() else {
             showToast("This user cannot be operated.", position: .bottom)
             return
@@ -618,6 +621,26 @@ final class PostVideoViewController: BaseViewController {
         }
     }
 
+    private func currentPost() -> PostObject? {
+        guard let postId else { return nil }
+        return DatabaseService.shared.posts().first { $0.id == postId }
+    }
+
+    private var isCurrentUserPost: Bool {
+        guard let currentUser = AuthService.shared.currentUser() else { return false }
+
+        if let post = currentPost() {
+            return post.authorId == currentUser.id
+        }
+
+        return anyAuthorUser()?.id == currentUser.id
+    }
+
+    private func updateMoreButtonVisibility() {
+        moreButton.isHidden = isCurrentUserPost
+        moreButton.isEnabled = !isCurrentUserPost
+    }
+
     private func displayName(for user: UserObject?) -> String? {
         guard let user else { return nil }
         return user.displayName.isEmpty ? user.username : user.displayName
@@ -629,6 +652,7 @@ final class PostVideoViewController: BaseViewController {
 
     @objc private func handleUserProfileDidUpdate() {
         reloadAuthorAvatar()
+        updateMoreButtonVisibility()
         reloadComments()
         refreshCommentsList()
     }
