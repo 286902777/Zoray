@@ -161,7 +161,7 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
             peerUserId: message.peerUserId,
             peerAvatarImageName: message.avatarImageName
         )
-        navigationController?.pushViewController(detailViewController, animated: true)
+        navigationController?.pushViewController(detailViewController, animated: false)
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {

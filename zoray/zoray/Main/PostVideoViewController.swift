@@ -640,7 +640,13 @@ extension PostVideoViewController: UICollectionViewDataSource, UICollectionViewD
         }
 
         let comment = comments[indexPath.item]
-        cell.configure(userName: comment.userName, avatarImageName: comment.avatarImageName, text: comment.text)
+        let isCurrentUserComment = comment.userId == AuthService.shared.currentUser()?.id
+        cell.configure(
+            userName: comment.userName,
+            avatarImageName: comment.avatarImageName,
+            text: comment.text,
+            showsMoreButton: !isCurrentUserComment
+        )
         cell.onMoreTapped = { [weak self, weak cell, weak collectionView] in
             guard let self,
                   let cell,
@@ -675,9 +681,14 @@ private final class CommentCollectionViewCell: UICollectionViewCell {
         onMoreTapped = nil
     }
 
-    func configure(userName: String, avatarImageName: String, text: String) {
+    func configure(userName: String, avatarImageName: String, text: String, showsMoreButton: Bool) {
         rowView?.removeFromSuperview()
-        let rowView = CommentRowView(userName: userName, avatarImageName: avatarImageName, text: text)
+        let rowView = CommentRowView(
+            userName: userName,
+            avatarImageName: avatarImageName,
+            text: text,
+            showsMoreButton: showsMoreButton
+        )
         rowView.onMoreTapped = { [weak self] in
             self?.onMoreTapped?()
         }
@@ -697,12 +708,14 @@ private final class CommentRowView: UIView {
     private let bodyLabel = UILabel()
     private let moreButton = UIButton(type: .custom)
 
-    init(userName: String, avatarImageName: String, text: String) {
+    init(userName: String, avatarImageName: String, text: String, showsMoreButton: Bool) {
         super.init(frame: .zero)
         avatarImageView.image = AvatarImageLoader.image(named: avatarImageName)
         nameLabel.text = userName
         bodyLabel.text = text
         setupUI()
+        moreButton.isHidden = !showsMoreButton
+        moreButton.isEnabled = showsMoreButton
     }
 
     required init?(coder: NSCoder) {

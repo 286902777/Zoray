@@ -171,14 +171,15 @@ final class LoginViewController: BaseViewController {
 
     @objc private func login() {
         do {
-            try AuthService.shared.login(username: usernameField.text ?? "", password: passwordField.text ?? "")
             loginButton.isEnabled = false
+            try AuthService.shared.login(email: usernameField.text ?? "", password: passwordField.text ?? "")
             LoadingView.show(in: view, message: "Loading...") { [weak self] in
                 guard let self else { return }
                 self.loginButton.isEnabled = true
                 AppRootController.shared.showMain(in: self.view.window)
             }
         } catch {
+            loginButton.isEnabled = true
             showAlert(message: errorMessage(from: error))
         }
     }

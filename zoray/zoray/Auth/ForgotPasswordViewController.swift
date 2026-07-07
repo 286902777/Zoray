@@ -88,7 +88,7 @@ final class ForgotPasswordViewController: BaseViewController {
             make.leading.trailing.height.equalTo(usernameField)
         }
 
-        configure(label: confirmPasswordLabel, text: "Password:")
+        configure(label: confirmPasswordLabel, text: "Confirm password:")
         formContainerView.addSubview(confirmPasswordLabel)
         confirmPasswordLabel.snp.makeConstraints { make in
             make.top.equalTo(passwordField.snp.bottom).offset(24)
@@ -123,7 +123,7 @@ final class ForgotPasswordViewController: BaseViewController {
     @objc private func resetPassword() {
         do {
             try AuthService.shared.resetPassword(
-                username: usernameField.text ?? "",
+                email: usernameField.text ?? "",
                 newPassword: passwordField.text ?? "",
                 confirmPassword: confirmPasswordField.text ?? ""
             )

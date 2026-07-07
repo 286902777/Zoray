@@ -1,4 +1,3 @@
-import AVFoundation
 import SnapKit
 import UIKit
 
@@ -185,7 +184,7 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
                 avatarImageName: userAvatarNamesById[post.authorId] ?? "user_icon",
                 body: post.body.isEmpty ? "Just had the best random chat tonight..." : post.body,
                 videoURL: post.videoURL,
-                thumbnail: videoURL.flatMap { makeVideoThumbnail(from: $0) },
+                thumbnail: videoURL.flatMap { VideoThumbnailGenerator.thumbnail(from: $0) },
                 isFollowing: followingUserIds.contains(post.authorId),
                 isCurrentUserPost: post.authorId == currentUser?.id
             )
@@ -415,19 +414,6 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
             ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension)
     }
 
-    private func makeVideoThumbnail(from url: URL) -> UIImage? {
-        let asset = AVAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: 640, height: 360)
-
-        do {
-            let imageRef = try generator.copyCGImage(at: CMTime(seconds: 0.1, preferredTimescale: 600), actualTime: nil)
-            return UIImage(cgImage: imageRef)
-        } catch {
-            return nil
-        }
-    }
 }
 
 private struct RecommendedUser {
@@ -653,6 +639,8 @@ private final class PostCardCell: UICollectionViewCell {
         nameLabel.text = post.userName
         bodyLabel.text = post.body
         postImageView.image = post.thumbnail ?? UIImage(named: "women")
+        moreButton.isHidden = post.isCurrentUserPost
+        moreButton.isEnabled = !post.isCurrentUserPost
         configureFollowButton(isFollowing: post.isFollowing, isCurrentUserPost: post.isCurrentUserPost)
     }
 

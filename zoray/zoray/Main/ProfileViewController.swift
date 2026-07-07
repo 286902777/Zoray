@@ -2,6 +2,8 @@ import SnapKit
 import UIKit
 
 final class ProfileViewController: BaseViewController {
+    private var latestWorkPost: PostObject?
+
     private let backgroundImageView = UIImageView(image: UIImage(named: "me_head"))
     private let contentView = UIView()
     private let settingsButton = UIButton(type: .custom)
@@ -21,6 +23,7 @@ final class ProfileViewController: BaseViewController {
     private let workAvatarImageView = UIImageView(image: UIImage(named: "user_icon"))
     private let workNameLabel = UILabel()
     private let workImageView = UIImageView(image: UIImage(named: "women"))
+    private let workPlayImageView = UIImageView(image: UIImage(named: "play"))
     private let workCaptionLabel = UILabel()
     private let emptyView = ZREmptyView()
 
@@ -228,12 +231,22 @@ final class ProfileViewController: BaseViewController {
         workImageView.contentMode = .scaleAspectFill
         workImageView.layer.cornerRadius = 12
         workImageView.layer.masksToBounds = true
+        workImageView.isUserInteractionEnabled = true
         worksContentView.addSubview(workImageView)
         workImageView.snp.makeConstraints { make in
             make.top.equalTo(workAvatarImageView.snp.bottom).offset(12)
             make.leading.trailing.equalTo(balanceCardView)
             make.height.equalTo(workImageView.snp.width).multipliedBy(0.62)
             make.bottom.equalToSuperview().offset(-120)
+        }
+
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(playLatestWork))
+        workImageView.addGestureRecognizer(tapGestureRecognizer)
+
+        workImageView.addSubview(workPlayImageView)
+        workPlayImageView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.width.height.equalTo(32)
         }
 
         workCaptionLabel.text = "Twilight..."
@@ -295,6 +308,7 @@ final class ProfileViewController: BaseViewController {
 
     private func reloadUser() {
         guard let user = AuthService.shared.currentUser() else {
+            latestWorkPost = nil
             nameLabel.text = "未登录"
             workNameLabel.text = "未登录"
             worksValueLabel.text = "0"
@@ -317,6 +331,7 @@ final class ProfileViewController: BaseViewController {
         balanceValueLabel.text = "\(BalanceService.shared.balance(for: user.id))"
 
         guard let latestPost = posts.first else {
+            latestWorkPost = nil
             showEmptyWorks()
             return
         }
@@ -328,17 +343,77 @@ final class ProfileViewController: BaseViewController {
         workAvatarImageView.isHidden = true
         workNameLabel.isHidden = true
         workImageView.isHidden = true
+        workPlayImageView.isHidden = true
         emptyView.isHidden = false
     }
 
     private func showLatestWork(userName: String, post: PostObject) {
+        latestWorkPost = post
         workAvatarImageView.isHidden = false
         workNameLabel.isHidden = false
         workImageView.isHidden = false
+        workPlayImageView.isHidden = false
         emptyView.isHidden = true
 
         workNameLabel.text = userName
         workCaptionLabel.text = post.body.isEmpty ? post.title : post.body
+        let videoURL = localVideoURL(from: post.videoURL)
+        workImageView.image = videoURL.flatMap { VideoThumbnailGenerator.thumbnail(from: $0) } ?? UIImage(named: "women")
+    }
+
+    @objc private func playLatestWork() {
+        guard let post = latestWorkPost else { return }
+        guard let videoURL = localVideoURL(from: post.videoURL) else {
+            showAlert(message: "No video is available for this post.")
+            return
+        }
+
+        navigationController?.pushViewController(
+            PostVideoViewController(
+                postId: post.id,
+                userName: workNameLabel.text ?? "",
+                body: post.body.isEmpty ? post.title : post.body,
+                videoURL: videoURL
+            ),
+            animated: true
+        )
+    }
+
+    private func localVideoURL(from storedVideoName: String?) -> URL? {
+        let value = storedVideoName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !value.isEmpty,
+              let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+
+        let fileName: String
+        if let url = URL(string: value), url.isFileURL {
+            fileName = url.lastPathComponent
+        } else {
+            fileName = URL(fileURLWithPath: value).lastPathComponent
+        }
+
+        let fileURL = documentsURL
+            .appendingPathComponent("UploadVideos", isDirectory: true)
+            .appendingPathComponent(fileName)
+
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+
+        return bundledVideoURL(fileName: fileName)
+    }
+
+    private func bundledVideoURL(fileName: String) -> URL? {
+        let fileURL = URL(fileURLWithPath: fileName)
+        let resourceName = fileURL.deletingPathExtension().lastPathComponent
+        let fileExtension = fileURL.pathExtension.isEmpty ? "mp4" : fileURL.pathExtension
+
+        return Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Video_File")
+            ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Vidoe_File")
+            ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Services/Video_File")
+            ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Services/Vidoe_File")
+            ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension)
     }
 
     @objc private func showSettings() {

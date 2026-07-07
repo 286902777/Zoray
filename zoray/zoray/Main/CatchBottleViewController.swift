@@ -283,8 +283,11 @@ final class CatchBottleViewController: BaseViewController {
     }
 
     @objc private func throwOut() {
-        dismiss(animated: true) {
-            ToastView.show(message: "Bottle thrown out.", in: UIApplication.shared.catchBottleToastView)
+        view.endEditing(true)
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.dismiss(animated: true) {
+                ToastView.show(message: "Bottle thrown out.", in: UIApplication.shared.catchBottleToastView)
+            }
         }
     }
 

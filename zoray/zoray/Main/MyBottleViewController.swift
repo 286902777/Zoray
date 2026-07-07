@@ -222,7 +222,11 @@ extension MyBottleViewController: UICollectionViewDataSource, UICollectionViewDe
             return UICollectionViewCell()
         }
 
-        cell.configure(with: replies[indexPath.item])
+        let reply = replies[indexPath.item]
+        cell.configure(
+            with: reply,
+            showsMoreButton: reply.userId != AuthService.shared.currentUser()?.id
+        )
         cell.onMoreTapped = { [weak self, weak cell, weak collectionView] in
             guard let self,
                   let cell,
@@ -375,10 +379,12 @@ private final class MyBottleReplyCell: UICollectionViewCell {
         }
     }
 
-    func configure(with viewModel: MyBottleViewController.ReplyViewModel) {
+    func configure(with viewModel: MyBottleViewController.ReplyViewModel, showsMoreButton: Bool) {
         avatarImageView.image = AvatarImageLoader.image(named: viewModel.avatarImageName)
         nameLabel.text = viewModel.userName
         bodyLabel.text = viewModel.body
+        moreButton.isHidden = !showsMoreButton
+        moreButton.isEnabled = showsMoreButton
     }
 
     @objc private func moreTapped() {

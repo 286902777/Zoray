@@ -1,4 +1,3 @@
-import AVFoundation
 import SnapKit
 import UIKit
 
@@ -279,18 +278,40 @@ final class OtherProfileViewController: BaseViewController {
         let displayName = displayName(for: user)
         displayedPosts.forEach { post in
             let videoURL = localVideoURL(from: post.videoURL)
-            let thumbnail = videoURL.flatMap { makeVideoThumbnail(from: $0) }
+            let thumbnail = videoURL.flatMap { VideoThumbnailGenerator.thumbnail(from: $0) }
             let workView = OtherProfileWorkView(
                 userName: displayName,
                 avatarImageName: AvatarImageLoader.avatarImageName(for: user),
                 caption: post.body.isEmpty ? post.title : post.body,
-                thumbnail: thumbnail
+                thumbnail: thumbnail,
+                showsMoreButton: user.id != AuthService.shared.currentUser()?.id
             )
             workView.onMoreTapped = { [weak self] in
                 self?.showMore()
             }
+            workView.onPostTapped = { [weak self] in
+                self?.playPostVideo(post)
+            }
             worksStackView.addArrangedSubview(workView)
         }
+    }
+
+    private func playPostVideo(_ post: PostObject) {
+        guard let user = displayedUser else { return }
+        guard let videoURL = localVideoURL(from: post.videoURL) else {
+            showAlert(message: "No video is available for this post.")
+            return
+        }
+
+        navigationController?.pushViewController(
+            PostVideoViewController(
+                postId: post.id,
+                userName: displayName(for: user),
+                body: post.body.isEmpty ? post.title : post.body,
+                videoURL: videoURL
+            ),
+            animated: true
+        )
     }
 
     private func localVideoURL(from storedVideoName: String?) -> URL? {
@@ -328,20 +349,6 @@ final class OtherProfileViewController: BaseViewController {
             ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Services/Video_File")
             ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Services/Vidoe_File")
             ?? Bundle.main.url(forResource: resourceName, withExtension: fileExtension)
-    }
-
-    private func makeVideoThumbnail(from url: URL) -> UIImage? {
-        let asset = AVAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: 640, height: 360)
-
-        do {
-            let imageRef = try generator.copyCGImage(at: CMTime(seconds: 0.1, preferredTimescale: 600), actualTime: nil)
-            return UIImage(cgImage: imageRef)
-        } catch {
-            return nil
-        }
     }
 
     @objc private func goBack() {
@@ -410,13 +417,14 @@ final class OtherProfileViewController: BaseViewController {
                 peerUserId: displayedUser.id,
                 peerAvatarImageName: AvatarImageLoader.avatarImageName(for: displayedUser)
             ),
-            animated: true
+            animated: false
         )
     }
 }
 
 private final class OtherProfileWorkView: UIView {
     var onMoreTapped: (() -> Void)?
+    var onPostTapped: (() -> Void)?
 
     private let userName: String
     private let avatarImageName: String
@@ -427,15 +435,18 @@ private final class OtherProfileWorkView: UIView {
     private let nameLabel = UILabel()
     private let moreButton = UIButton(type: .custom)
     private let postImageView = UIImageView(image: UIImage(named: "women"))
+    private let playView = UIImageView(image: UIImage(named: "play"))
     private let captionLabel = UILabel()
 
-    init(userName: String, avatarImageName: String, caption: String, thumbnail: UIImage?) {
+    init(userName: String, avatarImageName: String, caption: String, thumbnail: UIImage?, showsMoreButton: Bool) {
         self.userName = userName
         self.avatarImageName = avatarImageName
         self.caption = caption
         self.thumbnail = thumbnail
         super.init(frame: .zero)
         setupUI()
+        moreButton.isHidden = !showsMoreButton
+        moreButton.isEnabled = showsMoreButton
     }
 
     required init?(coder: NSCoder) {
@@ -476,12 +487,22 @@ private final class OtherProfileWorkView: UIView {
         postImageView.image = thumbnail ?? UIImage(named: "women")
         postImageView.layer.cornerRadius = 12
         postImageView.layer.masksToBounds = true
+        postImageView.isUserInteractionEnabled = true
         addSubview(postImageView)
         postImageView.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(12)
             make.leading.trailing.equalToSuperview()
             make.height.equalTo(postImageView.snp.width).multipliedBy(0.62)
             make.bottom.equalToSuperview()
+        }
+
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(postTapped))
+        postImageView.addGestureRecognizer(tapGestureRecognizer)
+
+        postImageView.addSubview(playView)
+        playView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.width.height.equalTo(32)
         }
 
         captionLabel.text = caption
@@ -497,5 +518,9 @@ private final class OtherProfileWorkView: UIView {
 
     @objc private func moreTapped() {
         onMoreTapped?()
+    }
+
+    @objc private func postTapped() {
+        onPostTapped?()
     }
 }

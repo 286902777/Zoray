@@ -6,8 +6,9 @@ enum AuthError: LocalizedError {
     case emptyUsername
     case emptyPassword
     case emptyDisplayName
+    case invalidEmail
     case passwordMismatch
-    case usernameTaken
+    case emailTaken
     case reservedUsername
     case invalidCredentials
     case userNotFound
@@ -19,15 +20,17 @@ enum AuthError: LocalizedError {
         case .privacyRequired:
             return "Please read and agree to the Privacy Policy first."
         case .emptyUsername:
-            return "Please enter your username."
+            return "Please enter your email."
         case .emptyPassword:
             return "Please enter your password."
         case .emptyDisplayName:
             return "Please enter your display name."
+        case .invalidEmail:
+            return "Please enter a valid email address."
         case .passwordMismatch:
             return "The passwords do not match."
-        case .usernameTaken:
-            return "This username is already taken."
+        case .emailTaken:
+            return "This email is already registered."
         case .reservedUsername:
             return "This username cannot be used."
         case .invalidCredentials:
@@ -90,28 +93,28 @@ final class AuthService {
     }
 
     @discardableResult
-    func register(username: String, displayName: String, password: String, confirmPassword: String) throws -> UserObject {
-        let normalizedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+    func register(email: String, displayName: String? = nil, password: String, confirmPassword: String) throws -> UserObject {
+        let normalizedEmail = normalizeEmail(email)
+        let normalizedDisplayName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedConfirmPassword = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !normalizedUsername.isEmpty else { throw AuthError.emptyUsername }
-        guard !normalizedDisplayName.isEmpty else { throw AuthError.emptyDisplayName }
+        guard !normalizedEmail.isEmpty else { throw AuthError.emptyUsername }
+        guard isValidEmail(normalizedEmail) else { throw AuthError.invalidEmail }
         guard !normalizedPassword.isEmpty else { throw AuthError.emptyPassword }
         guard normalizedPassword == normalizedConfirmPassword else { throw AuthError.passwordMismatch }
-        guard normalizedUsername.lowercased() != guestUsername else { throw AuthError.reservedUsername }
 
         let realm = try safeRealm()
-        guard user(username: normalizedUsername, in: realm) == nil else {
-            throw AuthError.usernameTaken
+        guard userForEmail(normalizedEmail, in: realm) == nil else {
+            throw AuthError.emailTaken
         }
 
+        let username = uniqueUsername(from: normalizedEmail, in: realm)
         let user = UserObject()
         user.id = UUID().uuidString
-        user.username = normalizedUsername
-        user.email = "\(normalizedUsername.lowercased())@gmail.com"
-        user.displayName = normalizedDisplayName
+        user.username = username
+        user.email = normalizedEmail
+        user.displayName = normalizedDisplayName?.isEmpty == false ? normalizedDisplayName! : username
         user.password = normalizedPassword
         user.isGuest = false
         user.createdAt = Date()
@@ -129,19 +132,21 @@ final class AuthService {
     }
 
     @discardableResult
-    func login(username: String, password: String) throws -> UserObject {
-        let normalizedEmail = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    func login(email: String, password: String) throws -> UserObject {
+        let normalizedEmail = normalizeEmail(email)
         let normalizedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !normalizedEmail.isEmpty else { throw AuthError.emptyUsername }
+        guard isValidEmail(normalizedEmail) else { throw AuthError.invalidEmail }
         guard !normalizedPassword.isEmpty else { throw AuthError.emptyPassword }
 
         let realm = try safeRealm()
-        guard let user = user(email: normalizedEmail, in: realm),
+        guard let user = userForEmail(normalizedEmail, in: realm),
               user.password == normalizedPassword else {
             throw AuthError.invalidCredentials
         }
 
+        updateLegacyEmailIfNeeded(user: user, email: normalizedEmail, in: realm)
         saveCurrentUserId(user.id)
         return user
     }
@@ -176,22 +181,24 @@ final class AuthService {
         }
     }
 
-    func resetPassword(username: String, newPassword: String, confirmPassword: String) throws {
-        let normalizedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+    func resetPassword(email: String, newPassword: String, confirmPassword: String) throws {
+        let normalizedEmail = normalizeEmail(email)
         let normalizedPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedConfirmPassword = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !normalizedUsername.isEmpty else { throw AuthError.emptyUsername }
+        guard !normalizedEmail.isEmpty else { throw AuthError.emptyUsername }
+        guard isValidEmail(normalizedEmail) else { throw AuthError.invalidEmail }
         guard !normalizedPassword.isEmpty else { throw AuthError.emptyPassword }
         guard normalizedPassword == normalizedConfirmPassword else { throw AuthError.passwordMismatch }
 
         let realm = try safeRealm()
-        guard let user = user(username: normalizedUsername, in: realm) else {
+        guard let user = userForEmail(normalizedEmail, in: realm) else {
             throw AuthError.userNotFound
         }
 
         do {
             try realm.write {
+                user.email = normalizedEmail
                 user.password = normalizedPassword
                 user.updatedAt = Date()
             }
@@ -245,6 +252,62 @@ final class AuthService {
 
     private func user(email: String, in realm: Realm) -> UserObject? {
         realm.objects(UserObject.self).where { $0.email == email }.first
+    }
+
+    private func userForEmail(_ email: String, in realm: Realm) -> UserObject? {
+        user(email: email, in: realm)
+            ?? user(username: email, in: realm)
+            ?? user(email: "\(email)@gmail.com", in: realm)
+    }
+
+    private func updateLegacyEmailIfNeeded(user: UserObject, email: String, in realm: Realm) {
+        guard user.email != email else { return }
+
+        do {
+            try realm.write {
+                user.email = email
+                user.updatedAt = Date()
+            }
+        } catch {
+            assertionFailure("Failed to normalize legacy email: \(error.localizedDescription)")
+        }
+    }
+
+    private func normalizeEmail(_ email: String) -> String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let parts = email.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2,
+              !parts[0].isEmpty,
+              parts[1].contains("."),
+              !parts[1].hasPrefix("."),
+              !parts[1].hasSuffix(".") else {
+            return false
+        }
+        return true
+    }
+
+    private func uniqueUsername(from email: String, in realm: Realm) -> String {
+        let localPart = email.split(separator: "@").first.map(String.init) ?? "user"
+        let base = sanitizedUsername(localPart)
+        var candidate = base
+        var suffix = 1
+
+        while user(username: candidate, in: realm) != nil || candidate == guestUsername {
+            candidate = "\(base)\(suffix)"
+            suffix += 1
+        }
+
+        return candidate
+    }
+
+    private func sanitizedUsername(_ value: String) -> String {
+        let allowed = value.lowercased().filter { character in
+            character.isLetter || character.isNumber || character == "_" || character == "-"
+        }
+        return allowed.isEmpty ? "user" : String(allowed.prefix(24))
     }
 
     private func guestUser(in realm: Realm) -> UserObject? {

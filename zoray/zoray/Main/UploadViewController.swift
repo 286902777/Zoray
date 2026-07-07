@@ -1,4 +1,3 @@
-import AVFoundation
 import PhotosUI
 import SnapKit
 import UniformTypeIdentifiers
@@ -168,11 +167,22 @@ final class UploadViewController: BaseViewController {
         }
         let videoFileName = selectedVideoFileName ?? selectedVideoURL.lastPathComponent
 
-        do {
-            try DatabaseService.shared.createPost(
-                authorId: user.id,
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.createPost(
+                userId: user.id,
                 title: normalizedTitle,
                 body: normalizedBody,
+                videoFileName: videoFileName
+            )
+        }
+    }
+
+    private func createPost(userId: String, title: String, body: String, videoFileName: String) {
+        do {
+            try DatabaseService.shared.createPost(
+                authorId: userId,
+                title: title,
+                body: body,
                 videoURL: videoFileName
             )
             showPostCreatedFeedback()
@@ -227,22 +237,8 @@ final class UploadViewController: BaseViewController {
     private func updateSelectedVideo(_ url: URL) {
         selectedVideoURL = url
         selectedVideoFileName = url.lastPathComponent
-        selectedVideoThumbnail = makeThumbnail(from: url)
+        selectedVideoThumbnail = VideoThumbnailGenerator.thumbnail(from: url)
         videoCollectionView.reloadData()
-    }
-
-    private func makeThumbnail(from url: URL) -> UIImage? {
-        let asset = AVAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: 240, height: 240)
-
-        do {
-            let imageRef = try generator.copyCGImage(at: CMTime(seconds: 0.1, preferredTimescale: 600), actualTime: nil)
-            return UIImage(cgImage: imageRef)
-        } catch {
-            return nil
-        }
     }
 }
 

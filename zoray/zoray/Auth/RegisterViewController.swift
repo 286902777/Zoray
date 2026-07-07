@@ -84,7 +84,7 @@ final class RegisterViewController: BaseViewController {
             make.leading.trailing.height.equalTo(usernameField)
         }
 
-        configure(label: confirmPasswordLabel, text: "Password:")
+        configure(label: confirmPasswordLabel, text: "Confirm password:")
         formContainerView.addSubview(confirmPasswordLabel)
         confirmPasswordLabel.snp.makeConstraints { make in
             make.top.equalTo(passwordField.snp.bottom).offset(18)
@@ -118,10 +118,8 @@ final class RegisterViewController: BaseViewController {
 
     @objc private func register() {
         do {
-            let username = usernameField.text ?? ""
             try AuthService.shared.register(
-                username: username,
-                displayName: username,
+                email: usernameField.text ?? "",
                 password: passwordField.text ?? "",
                 confirmPassword: confirmPasswordField.text ?? ""
             )

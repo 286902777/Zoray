@@ -75,21 +75,17 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         fatalError("init(coder:) has not been implemented")
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-        audioRecorder?.delegate = nil
-        audioRecorder?.stop()
-        audioPlayer?.delegate = nil
-        audioPlayer?.stop()
-        deactivateAudioSession()
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupActions()
         setupKeyboardObservers()
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidUpdate), name: .zorayUserProfileDidUpdate, object: nil)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        cleanupAudioResources()
     }
 
     private func setupUI() {
@@ -101,7 +97,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         setupContent()
         setupInputBar()
         setupMessages()
-        updateInputMode(.text)
+        updateInputMode(.text, animated: false)
     }
 
     private func setupBackground() {
@@ -186,7 +182,10 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         }
 
         reloadMessagesFromDatabase()
-        messagesCollectionView.reloadData()
+        UIView.performWithoutAnimation {
+            messagesCollectionView.reloadData()
+            messagesCollectionView.layoutIfNeeded()
+        }
     }
 
     private func setupInputBar() {
@@ -387,7 +386,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         applyKeyboardLayout(animated: true, duration: duration, options: options)
     }
 
-    private func updateInputMode(_ mode: InputMode) {
+    private func updateInputMode(_ mode: InputMode, animated: Bool = true) {
         inputMode = mode
 
         switch mode {
@@ -405,7 +404,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
             keyboardVisibleHeight = 0
         }
 
-        applyInputModeLayout(animated: true, duration: 0.22)
+        applyInputModeLayout(animated: animated, duration: 0.22)
     }
 
     private func applyInputModeLayout(animated: Bool, duration: TimeInterval) {
@@ -761,6 +760,20 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
 
     private func deactivateAudioSession() {
         try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    }
+
+    private func cleanupAudioResources() {
+        audioRecorder?.delegate = nil
+        audioRecorder?.stop()
+        audioRecorder = nil
+        audioPlayer?.delegate = nil
+        audioPlayer?.stop()
+        audioPlayer = nil
+        isRecording = false
+        recordingStartDate = nil
+        currentRecordingURL = nil
+        updateVoiceButtonRecordingState(isRecording: false)
+        deactivateAudioSession()
     }
 }
 
