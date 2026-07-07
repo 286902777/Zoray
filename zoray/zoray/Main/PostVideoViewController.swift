@@ -4,6 +4,7 @@ import UIKit
 
 final class PostVideoViewController: BaseViewController {
     private struct CommentViewModel {
+        let userId: String?
         let userName: String
         let avatarImageName: String
         let text: String
@@ -79,6 +80,7 @@ final class PostVideoViewController: BaseViewController {
         updateLikeButtonState()
         reloadAuthorAvatar()
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidUpdate), name: .zorayUserProfileDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleBlockedUsersDidChange), name: .zorayBlockedUsersDidChange, object: nil)
         startAutoplay()
     }
 
@@ -231,6 +233,7 @@ final class PostVideoViewController: BaseViewController {
     private func setupActions() {
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         avatarButton.addTarget(self, action: #selector(showOtherProfile), for: .touchUpInside)
+        moreButton.addTarget(self, action: #selector(showMore), for: .touchUpInside)
         playButton.addTarget(self, action: #selector(togglePlayback), for: .touchUpInside)
         videoTapControl.addTarget(self, action: #selector(showPlaybackControl), for: .touchUpInside)
         commentButton.addTarget(self, action: #selector(showComments), for: .touchUpInside)
@@ -250,6 +253,28 @@ final class PostVideoViewController: BaseViewController {
 
     @objc private func showOtherProfile() {
         navigationController?.pushViewController(OtherProfileViewController(userName: userName), animated: true)
+    }
+
+    @objc private func showMore() {
+        guard let user = anyAuthorUser() ?? authorUser() else {
+            showToast("This user cannot be operated.", position: .bottom)
+            return
+        }
+
+        let viewController = PostMoreViewController(userId: user.id, userName: displayName(for: user) ?? userName)
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: false)
+    }
+
+    private func showCommentMore(for comment: CommentViewModel) {
+        guard let userId = comment.userId else {
+            showToast("This user cannot be operated.", position: .bottom)
+            return
+        }
+
+        let viewController = PostMoreViewController(userId: userId, userName: comment.userName)
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: false)
     }
 
     @objc private func toggleLike() {
@@ -483,16 +508,18 @@ final class PostVideoViewController: BaseViewController {
         guard let postId else {
             let avatarImageName = AvatarImageLoader.avatarImageName(for: authorUser())
             comments = [
-                CommentViewModel(userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight..."),
-                CommentViewModel(userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight...")
+                CommentViewModel(userId: anyAuthorUser()?.id, userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight..."),
+                CommentViewModel(userId: anyAuthorUser()?.id, userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight...")
             ]
             return
         }
 
-        let usersById = Dictionary(uniqueKeysWithValues: DatabaseService.shared.users().map { ($0.id, $0) })
-        comments = DatabaseService.shared.comments(for: postId).map { comment in
+        let currentUserId = AuthService.shared.currentUser()?.id
+        let usersById = Dictionary(uniqueKeysWithValues: DatabaseService.shared.visibleUsers(for: currentUserId).map { ($0.id, $0) })
+        comments = DatabaseService.shared.visibleComments(for: postId, currentUserId: currentUserId).map { comment in
             let user = usersById[comment.userId]
             return CommentViewModel(
+                userId: comment.userId,
                 userName: displayName(for: user) ?? userName,
                 avatarImageName: AvatarImageLoader.avatarImageName(for: user),
                 text: comment.content
@@ -502,13 +529,19 @@ final class PostVideoViewController: BaseViewController {
         if comments.isEmpty {
             let avatarImageName = AvatarImageLoader.avatarImageName(for: authorUser())
             comments = [
-                CommentViewModel(userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight..."),
-                CommentViewModel(userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight...")
+                CommentViewModel(userId: anyAuthorUser()?.id, userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight..."),
+                CommentViewModel(userId: anyAuthorUser()?.id, userName: userName, avatarImageName: avatarImageName, text: "Just had the best random chat tonight...")
             ]
         }
     }
 
     private func authorUser() -> UserObject? {
+        DatabaseService.shared.visibleUsers(for: AuthService.shared.currentUser()?.id).first { user in
+            user.id == userName || user.displayName == userName || user.username == userName
+        }
+    }
+
+    private func anyAuthorUser() -> UserObject? {
         DatabaseService.shared.users().first { user in
             user.id == userName || user.displayName == userName || user.username == userName
         }
@@ -527,6 +560,19 @@ final class PostVideoViewController: BaseViewController {
         reloadAuthorAvatar()
         reloadComments()
         refreshCommentsList()
+    }
+
+    @objc private func handleBlockedUsersDidChange() {
+        guard let currentUser = AuthService.shared.currentUser(),
+              let author = anyAuthorUser(),
+              currentUser.blockedUserIds.contains(author.id) else {
+            reloadAuthorAvatar()
+            reloadComments()
+            refreshCommentsList()
+            return
+        }
+
+        navigationController?.popViewController(animated: true)
     }
 
     private func refreshCommentsList() {
@@ -595,6 +641,15 @@ extension PostVideoViewController: UICollectionViewDataSource, UICollectionViewD
 
         let comment = comments[indexPath.item]
         cell.configure(userName: comment.userName, avatarImageName: comment.avatarImageName, text: comment.text)
+        cell.onMoreTapped = { [weak self, weak cell, weak collectionView] in
+            guard let self,
+                  let cell,
+                  let indexPath = collectionView?.indexPath(for: cell),
+                  self.comments.indices.contains(indexPath.item) else {
+                return
+            }
+            self.showCommentMore(for: self.comments[indexPath.item])
+        }
         return cell
     }
 
@@ -611,16 +666,21 @@ private final class CommentCollectionViewCell: UICollectionViewCell {
     static let reuseIdentifier = "CommentCollectionViewCell"
 
     private var rowView: CommentRowView?
+    var onMoreTapped: (() -> Void)?
 
     override func prepareForReuse() {
         super.prepareForReuse()
         rowView?.removeFromSuperview()
         rowView = nil
+        onMoreTapped = nil
     }
 
     func configure(userName: String, avatarImageName: String, text: String) {
         rowView?.removeFromSuperview()
         let rowView = CommentRowView(userName: userName, avatarImageName: avatarImageName, text: text)
+        rowView.onMoreTapped = { [weak self] in
+            self?.onMoreTapped?()
+        }
         self.rowView = rowView
         contentView.addSubview(rowView)
         rowView.snp.makeConstraints { make in
@@ -630,6 +690,8 @@ private final class CommentCollectionViewCell: UICollectionViewCell {
 }
 
 private final class CommentRowView: UIView {
+    var onMoreTapped: (() -> Void)?
+
     private let avatarImageView = UIImageView(image: UIImage(named: "user_icon"))
     private let nameLabel = UILabel()
     private let bodyLabel = UILabel()
@@ -679,11 +741,16 @@ private final class CommentRowView: UIView {
 
         moreButton.setImage(UIImage(named: "more")?.withRenderingMode(.alwaysTemplate), for: .normal)
         moreButton.tintColor = .white
+        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         addSubview(moreButton)
         moreButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview()
             make.centerY.equalTo(avatarImageView)
             make.width.height.equalTo(28)
         }
+    }
+
+    @objc private func moreTapped() {
+        onMoreTapped?()
     }
 }

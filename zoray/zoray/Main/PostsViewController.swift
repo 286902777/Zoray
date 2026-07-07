@@ -31,6 +31,7 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
         setupUI()
         NotificationCenter.default.addObserver(self, selector: #selector(handlePostDidCreate), name: .zorayPostDidCreate, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidUpdate), name: .zorayUserProfileDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleBlockedUsersDidChange), name: .zorayBlockedUsersDidChange, object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -146,20 +147,26 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
     }
 
     private func reloadData() {
-        let allUsers = DatabaseService.shared.users()
-        let allPosts = DatabaseService.shared.posts()
+        let currentUser = AuthService.shared.currentUser()
+        let blockedUserIds = Set(currentUser.map { Array($0.blockedUserIds) } ?? [])
+        let allUsers = DatabaseService.shared.visibleUsers(for: currentUser?.id)
+        let allPosts = DatabaseService.shared.visiblePosts(for: currentUser?.id)
         let databasePosts: [PostObject]
         switch selectedFilter {
         case .recommended:
             databasePosts = allPosts
         case .follow:
-            let followingUserIds = AuthService.shared.currentUser().map { Array($0.followingUserIds) } ?? []
+            let followingUserIds = currentUser.map { user in
+                Array(user.followingUserIds).filter { followedUserId in
+                    !blockedUserIds.contains(followedUserId)
+                }
+            } ?? []
             databasePosts = DatabaseService.shared.posts(authorIds: followingUserIds)
+                .filter { !blockedUserIds.contains($0.authorId) }
         }
 
         reloadRecommendedUsers(users: allUsers, posts: allPosts)
 
-        let currentUser = AuthService.shared.currentUser()
         let followingUserIds = Set(currentUser.map { Array($0.followingUserIds) } ?? [])
         let userNamesById = Dictionary(uniqueKeysWithValues: allUsers.map { user in
             let displayName = user.displayName.isEmpty ? user.username : user.displayName
@@ -226,6 +233,10 @@ final class PostsViewController: BaseViewController, UICollectionViewDataSource,
     }
 
     @objc private func handleUserProfileDidUpdate() {
+        reloadData()
+    }
+
+    @objc private func handleBlockedUsersDidChange() {
         reloadData()
     }
 

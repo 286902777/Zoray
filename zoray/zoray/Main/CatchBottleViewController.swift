@@ -2,6 +2,9 @@ import SnapKit
 import UIKit
 
 final class CatchBottleViewController: BaseViewController {
+    private var displayedBottle: BottleObject?
+    private var displayedUser: UserObject?
+
     private let dimView = UIView()
     private let cardView = UIImageView(image: UIImage(named: "alert_b"))
     private let hiView = UIImageView(image: UIImage(named: "hi"))
@@ -17,7 +20,9 @@ final class CatchBottleViewController: BaseViewController {
     private let cancelButton = UIButton(type: .custom)
     private let throwButton = UIButton(type: .custom)
 
-    init() {
+    init(bottle: BottleObject? = nil, user: UserObject? = nil) {
+        displayedBottle = bottle
+        displayedUser = user
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle = .crossDissolve
@@ -42,6 +47,7 @@ final class CatchBottleViewController: BaseViewController {
         setupBody()
         setupReplyInput()
         setupButtons()
+        reloadBottleData()
     }
 
     private func setupDimView() {
@@ -53,12 +59,18 @@ final class CatchBottleViewController: BaseViewController {
     }
 
     private func setupCard() {
+        cardView.contentMode = .scaleToFill
         cardView.layer.cornerRadius = 36
         cardView.layer.masksToBounds = true
         cardView.isUserInteractionEnabled = true
         view.addSubview(cardView)
         cardView.snp.makeConstraints { make in
-            make.center.equalToSuperview()
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-6)
+            make.width.equalTo(274)
+            make.height.equalTo(312)
+            make.leading.greaterThanOrEqualToSuperview().offset(24)
+            make.trailing.lessThanOrEqualToSuperview().offset(-24)
         }
 
         view.addSubview(hiView)
@@ -105,6 +117,7 @@ final class CatchBottleViewController: BaseViewController {
 
         moreButton.setImage(UIImage(named: "more")?.withRenderingMode(.alwaysTemplate), for: .normal)
         moreButton.tintColor = .white
+        moreButton.addTarget(self, action: #selector(showMore), for: .touchUpInside)
         topBackgroundImageView.addSubview(moreButton)
         moreButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-18)
@@ -114,14 +127,16 @@ final class CatchBottleViewController: BaseViewController {
     }
 
     private func setupBody() {
-        bodyLabel.text = "I took 30 days to finally finish Fixing the\nhand-sewing of props to the adjustment of\nmakeup details, every aspect."
+        bodyLabel.text = "I took 30 days to finally finish Fixing the hand-sewing of props to the adjustment of makeup details, every aspect."
         bodyLabel.textColor = UIColor.white.withAlphaComponent(0.9)
         bodyLabel.font = .systemFont(ofSize: 10, weight: .medium)
-        bodyLabel.numberOfLines = 3
+        bodyLabel.numberOfLines = 4
+        bodyLabel.lineBreakMode = .byWordWrapping
         topBackgroundImageView.addSubview(bodyLabel)
         bodyLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(10)
             make.leading.trailing.equalToSuperview().inset(22)
+            make.bottom.lessThanOrEqualToSuperview().offset(-12)
         }
     }
 
@@ -218,8 +233,53 @@ final class CatchBottleViewController: BaseViewController {
         dimView.addGestureRecognizer(tapGestureRecognizer)
     }
 
+    private func reloadBottleData() {
+        if let displayedBottle {
+            avatarImageView.image = AvatarImageLoader.image(for: displayedUser)
+            nameLabel.text = displayedUser.map { displayName(for: $0) } ?? "Unknown"
+            bodyLabel.text = displayedBottle.content
+            return
+        }
+
+        let currentUserId = AuthService.shared.currentUser()?.id
+        let bottles = DatabaseService.shared.visibleBottles(for: currentUserId)
+            .filter { $0.userId != currentUserId }
+        let usersById = Dictionary(uniqueKeysWithValues: DatabaseService.shared.visibleUsers(for: currentUserId).map { ($0.id, $0) })
+
+        guard let bottle = bottles.randomElement(),
+              let user = usersById[bottle.userId] else {
+            displayedBottle = nil
+            displayedUser = nil
+            avatarImageView.image = UIImage(named: "user_icon")
+            nameLabel.text = "Apisai Sloan"
+            bodyLabel.text = "I took 30 days to finally finish Fixing the\nhand-sewing of props to the adjustment of\nmakeup details, every aspect."
+            return
+        }
+
+        displayedBottle = bottle
+        displayedUser = user
+        avatarImageView.image = AvatarImageLoader.image(for: user)
+        nameLabel.text = displayName(for: user)
+        bodyLabel.text = bottle.content
+    }
+
+    private func displayName(for user: UserObject) -> String {
+        user.displayName.isEmpty ? user.username : user.displayName
+    }
+
     @objc private func clickCancelAction() {
         dismiss(animated: true)
+    }
+
+    @objc private func showMore() {
+        guard let displayedUser else {
+            showToast("This user cannot be operated.", position: .bottom)
+            return
+        }
+
+        let viewController = PostMoreViewController(userId: displayedUser.id, userName: displayName(for: displayedUser))
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: false)
     }
 
     @objc private func throwOut() {

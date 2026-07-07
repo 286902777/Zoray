@@ -25,6 +25,7 @@ final class HomeViewController: BaseViewController {
         setupUI()
         observeBalanceChanges()
         observeProfileChanges()
+        observeBlockedUsersChanges()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -211,6 +212,15 @@ final class HomeViewController: BaseViewController {
         )
     }
 
+    private func observeBlockedUsersChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleBlockedUsersDidChange),
+            name: .zorayBlockedUsersDidChange,
+            object: nil
+        )
+    }
+
     private func reloadBalance() {
         balanceLabel.text = "\(BalanceService.shared.currentBalance())"
     }
@@ -246,6 +256,10 @@ final class HomeViewController: BaseViewController {
         reloadBottleAvatars()
     }
 
+    @objc private func handleBlockedUsersDidChange() {
+        reloadBottleAvatars()
+    }
+
     @objc private func showWallet() {
         guard !showLoginPromptIfNeeded() else { return }
         let vc = WalletViewController()
@@ -268,10 +282,18 @@ final class HomeViewController: BaseViewController {
 
     @objc private func showCatchBottle() {
         guard !showLoginPromptIfNeeded() else { return }
+        guard let userId = AuthService.shared.currentUser()?.id else {
+            showToast("Please log in first.", position: .bottom)
+            return
+        }
+        guard BalanceService.shared.catchBottleCount(for: userId) > 0 else {
+            showToast(BalanceError.insufficientCatchBottleCount.localizedDescription, position: .bottom)
+            return
+        }
 
-        let viewController = CatchBottleViewController()
-        viewController.modalPresentationStyle = .overFullScreen
-        present(viewController, animated: true)
+        LoadingView.show(in: view, message: "Loading...") { [weak self] in
+            self?.finishCatchingBottle(for: userId)
+        }
     }
 
     @objc private func clickRemainingAction() {
@@ -303,6 +325,25 @@ final class HomeViewController: BaseViewController {
         }
     }
 
+    private func finishCatchingBottle(for userId: String) {
+        guard let bottle = DatabaseService.shared.randomCatchableBottle(excluding: userId) else {
+            showToast("No drifting bottles available.", position: .bottom)
+            return
+        }
+
+        do {
+            _ = try BalanceService.shared.consumeCatchBottleChance(for: userId)
+            reloadRemainingTimes()
+
+            let bottleUser = DatabaseService.shared.user(id: bottle.userId)
+            let viewController = CatchBottleViewController(bottle: bottle, user: bottleUser)
+            viewController.modalPresentationStyle = .overFullScreen
+            present(viewController, animated: true)
+        } catch {
+            showToast(errorMessage(from: error), position: .bottom)
+        }
+    }
+
     private func showLoginPromptIfNeeded() -> Bool {
         guard AuthService.shared.isGuestLoggedIn() else { return false }
 
@@ -312,7 +353,7 @@ final class HomeViewController: BaseViewController {
 
     private func reloadBottleAvatars() {
         let currentUserId = AuthService.shared.currentUser()?.id
-        let users = DatabaseService.shared.users().filter { $0.id != currentUserId }
+        let users = DatabaseService.shared.visibleUsers(for: currentUserId).filter { $0.id != currentUserId }
 
         bottleViews.forEach { bottleView in
             bottleView.configure(randomUserFrom: users)

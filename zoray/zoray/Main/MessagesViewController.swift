@@ -7,16 +7,24 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
     private let backgroundImageView = UIImageView(image: UIImage(named: "me_head"))
     private let titleLabel = UILabel()
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
+    private var hasShownInitialLoading = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserProfileDidUpdate), name: .zorayUserProfileDidUpdate, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleBlockedUsersDidChange), name: .zorayBlockedUsersDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleMessagesDidChange), name: .zorayMessagesDidChange, object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         reloadData()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        showInitialLoadingIfNeeded()
     }
 
     private func setupUI() {
@@ -65,7 +73,7 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
     private func reloadData() {
         if let user = AuthService.shared.currentUser() {
             let databaseMessages = DatabaseService.shared.messages(for: user.id)
-            let allUsers = DatabaseService.shared.users()
+            let allUsers = DatabaseService.shared.visibleUsers(for: user.id)
             let usersById = Dictionary(uniqueKeysWithValues: allUsers.map { databaseUser in
                 let displayName = databaseUser.displayName.isEmpty ? databaseUser.username : databaseUser.displayName
                 return (databaseUser.id, displayName)
@@ -95,6 +103,12 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
         collectionView.reloadData()
     }
 
+    private func showInitialLoadingIfNeeded() {
+        guard !hasShownInitialLoading else { return }
+        hasShownInitialLoading = true
+        LoadingView.show(in: view, message: "Loading...")
+    }
+
     private func latestMessageText(for message: MessageObject) -> String {
         if message.messageType == "voice" || message.content.hasPrefix("Voice message ") {
             return "[voice]"
@@ -108,6 +122,14 @@ final class MessagesViewController: BaseViewController, UICollectionViewDataSour
     }
 
     @objc private func handleUserProfileDidUpdate() {
+        reloadData()
+    }
+
+    @objc private func handleBlockedUsersDidChange() {
+        reloadData()
+    }
+
+    @objc private func handleMessagesDidChange() {
         reloadData()
     }
 

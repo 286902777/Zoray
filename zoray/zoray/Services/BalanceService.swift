@@ -9,6 +9,7 @@ enum BalanceError: LocalizedError {
     case unavailableUser
     case keychainWriteFailed
     case insufficientBalance
+    case insufficientCatchBottleCount
 
     var errorDescription: String? {
         switch self {
@@ -18,6 +19,8 @@ enum BalanceError: LocalizedError {
             return "Failed to update balance."
         case .insufficientBalance:
             return "Insufficient balance."
+        case .insufficientCatchBottleCount:
+            return "Please purchase more bottle catches."
         }
     }
 }
@@ -115,6 +118,23 @@ final class BalanceService {
         cachedBalances[userId] = newBalance
         cachedCatchBottleCounts[userId] = newCount
         postBalanceDidChange(userId: userId, balance: newBalance)
+        return newCount
+    }
+
+    @discardableResult
+    func consumeCatchBottleChance(for userId: String) throws -> Int {
+        let currentCount = catchBottleCount(for: userId)
+        guard currentCount > 0 else {
+            throw BalanceError.insufficientCatchBottleCount
+        }
+
+        let newCount = currentCount - 1
+        guard keychainStore.saveValue(newCount, key: "catchBottleCount", for: userId) else {
+            throw BalanceError.keychainWriteFailed
+        }
+
+        cachedCatchBottleCounts[userId] = newCount
+        postBalanceDidChange(userId: userId, balance: balance(for: userId))
         return newCount
     }
 

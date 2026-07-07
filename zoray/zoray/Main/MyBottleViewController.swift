@@ -23,6 +23,7 @@ final class MyBottleViewController: BaseViewController {
         super.viewDidLoad()
         setupUI()
         setupActions()
+        observeBlockedUsersChanges()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -136,6 +137,15 @@ final class MyBottleViewController: BaseViewController {
         upButton.addTarget(self, action: #selector(showExpand), for: .touchUpInside)
     }
 
+    private func observeBlockedUsersChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleBlockedUsersDidChange(_:)),
+            name: .zorayBlockedUsersDidChange,
+            object: nil
+        )
+    }
+
     private func reloadBottleData() {
         guard let currentUser = AuthService.shared.currentUser() else {
             expandedPrimaryItemView.configure(user: nil, bottle: nil)
@@ -144,10 +154,12 @@ final class MyBottleViewController: BaseViewController {
             return
         }
 
-        let usersById = Dictionary(uniqueKeysWithValues: DatabaseService.shared.users().map { ($0.id, $0) })
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        let visibleUsers = DatabaseService.shared.visibleUsers(for: currentUser.id)
+        let usersById = Dictionary(uniqueKeysWithValues: visibleUsers.map { ($0.id, $0) })
         let bottle = DatabaseService.shared.bottles().first { $0.userId == currentUser.id }
         expandedPrimaryItemView.configure(user: currentUser, bottle: bottle)
-        let comments = bottle.map { Array($0.comments) } ?? []
+        let comments = bottle.map { Array($0.comments).filter { !blockedUserIds.contains($0.userId) } } ?? []
         replies = comments.map { comment in
             let user = usersById[comment.userId]
             let name = user.map { displayName(for: $0) } ?? "Apisai Sloan"
@@ -169,6 +181,14 @@ final class MyBottleViewController: BaseViewController {
 
     private func displayName(for user: UserObject) -> String {
         user.displayName.isEmpty ? user.username : user.displayName
+    }
+
+    @objc private func handleBlockedUsersDidChange(_ notification: Notification) {
+        guard let userId = notification.object as? String,
+              userId == AuthService.shared.currentUser()?.id else {
+            return
+        }
+        reloadBottleData()
     }
     
     @objc func showExpand() {

@@ -214,6 +214,7 @@ final class OtherProfileViewController: BaseViewController {
 
     private func setupActions() {
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        moreButton.addTarget(self, action: #selector(showMore), for: .touchUpInside)
         followButton.addTarget(self, action: #selector(follow), for: .touchUpInside)
         chatButton.addTarget(self, action: #selector(chat), for: .touchUpInside)
     }
@@ -233,7 +234,8 @@ final class OtherProfileViewController: BaseViewController {
         }
 
         displayedUser = user
-        displayedPosts = DatabaseService.shared.posts(authorIds: [user.id])
+        displayedPosts = DatabaseService.shared.visiblePosts(for: AuthService.shared.currentUser()?.id)
+            .filter { $0.authorId == user.id }
 
         let displayName = displayName(for: user)
         nameLabel.text = displayName
@@ -251,7 +253,7 @@ final class OtherProfileViewController: BaseViewController {
     }
 
     private func resolveDisplayedUser() -> UserObject? {
-        DatabaseService.shared.users().first { user in
+        DatabaseService.shared.visibleUsers(for: AuthService.shared.currentUser()?.id).first { user in
             user.id == userName || user.displayName == userName || user.username == userName
         }
     }
@@ -278,14 +280,16 @@ final class OtherProfileViewController: BaseViewController {
         displayedPosts.forEach { post in
             let videoURL = localVideoURL(from: post.videoURL)
             let thumbnail = videoURL.flatMap { makeVideoThumbnail(from: $0) }
-            worksStackView.addArrangedSubview(
-                OtherProfileWorkView(
-                    userName: displayName,
-                    avatarImageName: AvatarImageLoader.avatarImageName(for: user),
-                    caption: post.body.isEmpty ? post.title : post.body,
-                    thumbnail: thumbnail
-                )
+            let workView = OtherProfileWorkView(
+                userName: displayName,
+                avatarImageName: AvatarImageLoader.avatarImageName(for: user),
+                caption: post.body.isEmpty ? post.title : post.body,
+                thumbnail: thumbnail
             )
+            workView.onMoreTapped = { [weak self] in
+                self?.showMore()
+            }
+            worksStackView.addArrangedSubview(workView)
         }
     }
 
@@ -342,6 +346,17 @@ final class OtherProfileViewController: BaseViewController {
 
     @objc private func goBack() {
         navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func showMore() {
+        guard let displayedUser else {
+            showToast("This user cannot be operated.", position: .bottom)
+            return
+        }
+
+        let viewController = PostMoreViewController(userId: displayedUser.id, userName: displayName(for: displayedUser))
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: false)
     }
 
     @objc private func handleUserProfileDidUpdate() {
@@ -401,6 +416,8 @@ final class OtherProfileViewController: BaseViewController {
 }
 
 private final class OtherProfileWorkView: UIView {
+    var onMoreTapped: (() -> Void)?
+
     private let userName: String
     private let avatarImageName: String
     private let caption: String
@@ -447,6 +464,7 @@ private final class OtherProfileWorkView: UIView {
 
         moreButton.setImage(UIImage(named: "more")?.withRenderingMode(.alwaysTemplate), for: .normal)
         moreButton.tintColor = .white
+        moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         addSubview(moreButton)
         moreButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview()
@@ -475,5 +493,9 @@ private final class OtherProfileWorkView: UIView {
             make.bottom.equalToSuperview().offset(-12)
             make.trailing.lessThanOrEqualToSuperview().offset(-14)
         }
+    }
+
+    @objc private func moreTapped() {
+        onMoreTapped?()
     }
 }

@@ -4,6 +4,8 @@ internal import Realm
 
 extension Notification.Name {
     static let zorayUserProfileDidUpdate = Notification.Name("zoray.userProfileDidUpdate")
+    static let zorayBlockedUsersDidChange = Notification.Name("zoray.blockedUsersDidChange")
+    static let zorayMessagesDidChange = Notification.Name("zoray.messagesDidChange")
 }
 
 enum DatabaseError: LocalizedError {
@@ -35,6 +37,12 @@ final class DatabaseService {
         let userName: String
         let avatarFileName: String
         let content: String
+    }
+
+    private struct SeedMessageData {
+        let peerUserName: String
+        let content: String
+        let isFromSienna: Bool
     }
 
     static let shared = DatabaseService()
@@ -78,12 +86,88 @@ final class DatabaseService {
         )
     ]
 
-    private let siennaBottleComments = [
+    private let seedBottles: [SeedBottleData] = [
+        SeedBottleData(
+            userName: "Chloe",
+            avatarFileName: "Chloe.jpg",
+            content: "Anyone else up at 2 AM styling wigs? Working on Lumine from Genshin Impact and the bangs are driving me crazy! Any tips on keeping spikes stiff but natural? Please save me!"
+        ),
+        SeedBottleData(
+            userName: "Sophia",
+            avatarFileName: "Sophia.jpg",
+            content: "Just finished my Natsume shoot! Rolling in the dirt all afternoon was totally worth it, the raw previews look magical. Who wants to see the final results? Drop a reply!"
+        ),
+        SeedBottleData(
+            userName: "Emily",
+            avatarFileName: "Emily.jpg",
+            content: "Going to Anime Expo alone next weekend! Cosplaying Asuka in her plugsuit. Looking for a squad to walk the floor, take photos, and grab dinner. Who's down?"
+        ),
+        SeedBottleData(
+            userName: "Hannah",
+            avatarFileName: "Hannah.jpg",
+            content: "SOS! Trying to draft a pattern for Ciel's ballroom dress (Black Butler), but I'm completely stuck on the bustle layers. Any cosplay tailors free to give some quick advice?"
+        ),
+        SeedBottleData(
+            userName: "Jessica",
+            avatarFileName: "Jessica.jpg",
+            content: "Just watched the latest episode and my favorite character died. I'm literally cosplaying their happy version next week just to heal my heartbreak. Anyone else do this?"
+        ),
+        SeedBottleData(
+            userName: "Marcus",
+            avatarFileName: "Marcus.jpg",
+            content: "Tried Tengen Uzui's flashy eye makeup today. Balancing sharp male features with 2D anime accuracy is tough! Just posted a quick tutorial video on my profile, let me know what you think!"
+        ),
+        SeedBottleData(
+            userName: "Nathan",
+            avatarFileName: "Nathan.jpg",
+            content: "Looking for a local cosplayer for a cyberpunk night shoot next month! Got my own lighting rig and a cinematic storyboard ready. DM me if you have a cool sci-fi outfit!"
+        ),
+        SeedBottleData(
+            userName: "Sienna",
+            avatarFileName: "Sienna.jpg",
+            content: "EVA foam is a lifesaver, but my hands are dead after crafting this. Finally got that perfect Elden Ring metallic finish, though!"
+        )
+    ]
+
+    private let seedBottleCommentContents = [
         "This sounds so fun, I want to see the final look!",
         "I have been there. Tiny cosplay details always take forever.",
         "Your idea is amazing. Please post an update when it is done.",
         "That shoot concept would look incredible with night lighting.",
         "I love this energy. Keep going!"
+    ]
+
+    private let seedMessages: [SeedMessageData] = [
+        SeedMessageData(
+            peerUserName: "Chloe",
+            content: "Your wig styling note saved me tonight. Thank you!",
+            isFromSienna: true
+        ),
+        SeedMessageData(
+            peerUserName: "Chloe",
+            content: "Anytime! Heat and a little patience do magic.",
+            isFromSienna: false
+        ),
+        SeedMessageData(
+            peerUserName: "Sophia",
+            content: "I want to see those Natsume previews when they are ready.",
+            isFromSienna: true
+        ),
+        SeedMessageData(
+            peerUserName: "Emily",
+            content: "Anime Expo solo squad? I can join for photos.",
+            isFromSienna: true
+        ),
+        SeedMessageData(
+            peerUserName: "Marcus",
+            content: "Your Tengen makeup tutorial is so clean.",
+            isFromSienna: true
+        ),
+        SeedMessageData(
+            peerUserName: "Marcus",
+            content: "Thanks! I can send the brush list later.",
+            isFromSienna: false
+        )
     ]
 
     private init() {
@@ -101,6 +185,11 @@ final class DatabaseService {
     func users() -> [UserObject] {
         guard let realm = try? realm() else { return [] }
         return Array(realm.objects(UserObject.self).sorted(byKeyPath: "createdAt", ascending: false))
+    }
+
+    func user(id: String) -> UserObject? {
+        guard let realm = try? realm() else { return nil }
+        return realm.object(ofType: UserObject.self, forPrimaryKey: id)
     }
 
     func updateUserProfile(userId: String, displayName: String? = nil, avatarFileName: String? = nil) throws {
@@ -138,6 +227,7 @@ final class DatabaseService {
                 }
                 currentUser.updatedAt = Date()
             }
+            NotificationCenter.default.post(name: .zorayBlockedUsersDidChange, object: currentUserId)
         } catch {
             throw DatabaseError.writeFailed
         }
@@ -161,14 +251,35 @@ final class DatabaseService {
                 }
                 currentUser.updatedAt = Date()
             }
+            NotificationCenter.default.post(name: .zorayBlockedUsersDidChange, object: currentUserId)
         } catch {
             throw DatabaseError.writeFailed
         }
     }
 
+    func visibleUsers(for currentUserId: String?) -> [UserObject] {
+        let allUsers = users()
+        guard let currentUserId,
+              let currentUser = allUsers.first(where: { $0.id == currentUserId }) else {
+            return allUsers
+        }
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        return allUsers.filter { !blockedUserIds.contains($0.id) }
+    }
+
     func posts() -> [PostObject] {
         guard let realm = try? realm() else { return [] }
         return Array(realm.objects(PostObject.self).sorted(byKeyPath: "createdAt", ascending: false))
+    }
+
+    func visiblePosts(for currentUserId: String?) -> [PostObject] {
+        let allPosts = posts()
+        guard let currentUserId,
+              let currentUser = users().first(where: { $0.id == currentUserId }) else {
+            return allPosts
+        }
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        return allPosts.filter { !blockedUserIds.contains($0.authorId) }
     }
 
     func posts(authorIds: [String]) -> [PostObject] {
@@ -188,19 +299,57 @@ final class DatabaseService {
         return Array(post.comments.sorted(byKeyPath: "createdAt", ascending: true))
     }
 
+    func visibleComments(for postId: String, currentUserId: String?) -> [PostCommentObject] {
+        let allComments = comments(for: postId)
+        guard let currentUserId,
+              let currentUser = users().first(where: { $0.id == currentUserId }) else {
+            return allComments
+        }
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        return allComments.filter { !blockedUserIds.contains($0.userId) }
+    }
+
     func bottles() -> [BottleObject] {
         guard let realm = try? realm() else { return [] }
         return Array(realm.objects(BottleObject.self).sorted(byKeyPath: "createdAt", ascending: false))
     }
 
+    func visibleBottles(for currentUserId: String?) -> [BottleObject] {
+        let allBottles = bottles()
+        guard let currentUserId,
+              let currentUser = users().first(where: { $0.id == currentUserId }) else {
+            return allBottles
+        }
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        return allBottles.filter { !blockedUserIds.contains($0.userId) }
+    }
+
+    func randomCatchableBottle(excluding currentUserId: String) -> BottleObject? {
+        visibleBottles(for: currentUserId)
+            .filter { $0.userId != currentUserId }
+            .randomElement()
+    }
+
     func messages(for userId: String) -> [MessageObject] {
         guard let realm = try? realm() else { return [] }
         let predicate = NSPredicate(format: "senderId == %@ OR receiverId == %@", userId, userId)
-        return Array(realm.objects(MessageObject.self).filter(predicate).sorted(byKeyPath: "createdAt", ascending: false))
+        let messages = Array(realm.objects(MessageObject.self).filter(predicate).sorted(byKeyPath: "createdAt", ascending: false))
+        guard let currentUser = realm.object(ofType: UserObject.self, forPrimaryKey: userId) else {
+            return messages
+        }
+        let blockedUserIds = Set(currentUser.blockedUserIds)
+        return messages.filter { message in
+            let peerUserId = message.senderId == userId ? message.receiverId : message.senderId
+            return !blockedUserIds.contains(peerUserId)
+        }
     }
 
     func messages(between currentUserId: String, and peerUserId: String) -> [MessageObject] {
         guard let realm = try? realm() else { return [] }
+        if let currentUser = realm.object(ofType: UserObject.self, forPrimaryKey: currentUserId),
+           currentUser.blockedUserIds.contains(peerUserId) {
+            return []
+        }
         let predicate = NSPredicate(
             format: "(senderId == %@ AND receiverId == %@) OR (senderId == %@ AND receiverId == %@)",
             currentUserId,
@@ -238,6 +387,14 @@ final class DatabaseService {
             try realm.write {
                 realm.add(message)
             }
+            NotificationCenter.default.post(
+                name: .zorayMessagesDidChange,
+                object: nil,
+                userInfo: [
+                    "senderId": senderId,
+                    "receiverId": receiverId
+                ]
+            )
         } catch {
             throw DatabaseError.writeFailed
         }
@@ -378,8 +535,8 @@ final class DatabaseService {
             let realm = try realm()
             let shouldSeedPosts = realm.objects(PostObject.self).isEmpty
             let shouldSeedBottles = realm.objects(BottleObject.self).isEmpty
-            guard shouldSeedPosts || shouldSeedBottles else { return }
-            let seedBottles = shouldSeedBottles ? loadSeedBottleData() : []
+            let shouldSeedMessages = realm.objects(MessageObject.self).isEmpty
+            guard shouldSeedPosts || shouldSeedBottles || shouldSeedMessages else { return }
 
             try realm.write {
                 if shouldSeedPosts {
@@ -407,7 +564,11 @@ final class DatabaseService {
                 }
 
                 if shouldSeedBottles {
-                    seedBottlesFromCSV(seedBottles, in: realm)
+                    seedInitialBottles(in: realm)
+                }
+
+                if shouldSeedMessages {
+                    seedInitialMessages(in: realm)
                 }
             }
         } catch {
@@ -415,7 +576,24 @@ final class DatabaseService {
         }
     }
 
-    private func seedBottlesFromCSV(_ seedBottles: [SeedBottleData], in realm: Realm) {
+    private func seedInitialMessages(in realm: Realm) {
+        let sienna = seedUser(named: "Sienna", avatarFileName: "Sienna.jpg", in: realm)
+        seedMessages.enumerated().forEach { index, data in
+            let peerUser = seedUser(named: data.peerUserName, avatarFileName: "\(data.peerUserName).jpg", in: realm)
+            let message = MessageObject()
+            message.id = "seed-message-sienna-\(data.peerUserName.lowercased())-\(index)"
+            message.senderId = data.isFromSienna ? sienna.id : peerUser.id
+            message.receiverId = data.isFromSienna ? peerUser.id : sienna.id
+            message.content = data.content
+            message.messageType = "text"
+            message.audioDuration = 0
+            message.isRead = data.isFromSienna
+            message.createdAt = Date().addingTimeInterval(TimeInterval(index * 60))
+            realm.add(message, update: .modified)
+        }
+    }
+
+    private func seedInitialBottles(in realm: Realm) {
         guard !seedBottles.isEmpty else { return }
 
         let bottles = seedBottles.map { data in
@@ -430,16 +608,26 @@ final class DatabaseService {
             return bottle
         }
 
-        guard let sienna = realm.objects(UserObject.self).where { $0.id == "seed-user-sienna" }.first else { return }
-        let commentTargets = bottles.filter { $0.userId != sienna.id }.shuffled().prefix(min(3, bottles.count))
-        commentTargets.enumerated().forEach { index, bottle in
+        guard let sienna = realm.objects(UserObject.self).where({ $0.username == "sienna" }).first,
+              let siennaBottle = bottles.first(where: { $0.userId == sienna.id }) else {
+            return
+        }
+
+        let commentUsers = seedBottles
+            .filter { $0.userName.lowercased() != "sienna" }
+            .shuffled()
+            .prefix(3)
+            .compactMap { seedData in
+                realm.objects(UserObject.self).where { $0.username == seedData.userName.lowercased() }.first
+            }
+        commentUsers.enumerated().forEach { index, user in
             let comment = BottleCommentObject()
-            comment.id = "seed-bottle-comment-sienna-\(index)"
-            comment.userId = sienna.id
-            comment.content = siennaBottleComments.randomElement() ?? "Love this bottle!"
+            comment.id = "seed-bottle-comment-\(user.username)-to-sienna-\(index)"
+            comment.userId = user.id
+            comment.content = seedBottleCommentContents.randomElement() ?? "Love this bottle!"
             comment.createdAt = Date()
-            bottle.comments.append(comment)
-            bottle.updatedAt = Date()
+            siennaBottle.comments.append(comment)
+            siennaBottle.updatedAt = Date()
         }
     }
 
@@ -459,63 +647,6 @@ final class DatabaseService {
         user.avatarFileName = avatarFileName
         user.updatedAt = Date()
         return user
-    }
-
-    private func loadSeedBottleData() -> [SeedBottleData] {
-        guard let url = Bundle.main.url(forResource: "pz", withExtension: "csv"),
-              let csv = try? String(contentsOf: url, encoding: .utf8) else {
-            return []
-        }
-
-        return parseCSVRows(csv).dropFirst().compactMap { row in
-            guard row.count >= 3 else { return nil }
-            let userName = row[0].trimmingCharacters(in: .whitespacesAndNewlines)
-            let avatarFileName = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            let content = row[2].trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !userName.isEmpty, !content.isEmpty else { return nil }
-            return SeedBottleData(userName: userName, avatarFileName: avatarFileName, content: content)
-        }
-    }
-
-    private func parseCSVRows(_ text: String) -> [[String]] {
-        var rows: [[String]] = []
-        var row: [String] = []
-        var field = ""
-        var isInQuotes = false
-        var index = text.startIndex
-
-        while index < text.endIndex {
-            let character = text[index]
-            let nextIndex = text.index(after: index)
-
-            if character == "\"" {
-                if isInQuotes, nextIndex < text.endIndex, text[nextIndex] == "\"" {
-                    field.append(character)
-                    index = text.index(after: nextIndex)
-                    continue
-                }
-                isInQuotes.toggle()
-            } else if character == "," && !isInQuotes {
-                row.append(field)
-                field = ""
-            } else if character == "\n" && !isInQuotes {
-                row.append(field.trimmingCharacters(in: CharacterSet(charactersIn: "\r")))
-                rows.append(row)
-                row = []
-                field = ""
-            } else {
-                field.append(character)
-            }
-
-            index = nextIndex
-        }
-
-        if !field.isEmpty || !row.isEmpty {
-            row.append(field.trimmingCharacters(in: CharacterSet(charactersIn: "\r")))
-            rows.append(row)
-        }
-
-        return rows
     }
 
     private func configure() {

@@ -75,6 +75,15 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        audioRecorder?.delegate = nil
+        audioRecorder?.stop()
+        audioPlayer?.delegate = nil
+        audioPlayer?.stop()
+        deactivateAudioSession()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -251,6 +260,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
     private func setupActions() {
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         albumButton.addTarget(self, action: #selector(openPhotoPicker), for: .touchUpInside)
+        moreButton.addTarget(self, action: #selector(showMore), for: .touchUpInside)
         inputModeButton.addTarget(self, action: #selector(toggleInputMode), for: .touchUpInside)
         sendButton.addTarget(self, action: #selector(sendTextMessage), for: .touchUpInside)
         voiceButton.addTarget(self, action: #selector(startVoiceRecording), for: .touchDown)
@@ -275,6 +285,14 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
 
     @objc private func goBack() {
         navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func showMore() {
+        let user = DatabaseService.shared.users().first { $0.id == peerUserId }
+        let displayName = user.map { $0.displayName.isEmpty ? $0.username : $0.displayName } ?? userName
+        let viewController = PostMoreViewController(userId: peerUserId, userName: displayName)
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: false)
     }
 
     @objc private func openPhotoPicker() {
@@ -324,12 +342,14 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
 
         let duration = max(1, Int(ceil(Date().timeIntervalSince(recordingStartDate ?? Date()))))
         let audioURL = currentRecordingURL
+        audioRecorder?.delegate = nil
         audioRecorder?.stop()
         audioRecorder = nil
         isRecording = false
         recordingStartDate = nil
         currentRecordingURL = nil
         updateVoiceButtonRecordingState(isRecording: false)
+        deactivateAudioSession()
 
         guard let audioURL, isPlayableVoiceFile(at: audioURL) else {
             showToast("Recording failed. Please try again.", position: .bottom)
@@ -342,6 +362,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
     @objc private func cancelVoiceRecording() {
         guard isRecording else { return }
 
+        audioRecorder?.delegate = nil
         audioRecorder?.stop()
         audioRecorder?.deleteRecording()
         audioRecorder = nil
@@ -349,6 +370,7 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         recordingStartDate = nil
         currentRecordingURL = nil
         updateVoiceButtonRecordingState(isRecording: false)
+        deactivateAudioSession()
     }
 
     @objc private func handleKeyboardFrameChange(_ notification: Notification) {
@@ -595,6 +617,11 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker])
             try session.setActive(true)
+            guard hasAvailableAudioInput(session) else {
+                deactivateAudioSession()
+                showToast("No microphone input device found.", position: .bottom)
+                return
+            }
 
             let audioURL = try makeRecordingURL()
             let settings: [String: Any] = [
@@ -621,8 +648,15 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
             isRecording = true
             updateVoiceButtonRecordingState(isRecording: true)
         } catch {
+            deactivateAudioSession()
             showToast("Recording failed. Please try again.", position: .bottom)
         }
+    }
+
+    private func hasAvailableAudioInput(_ session: AVAudioSession) -> Bool {
+        guard session.isInputAvailable else { return false }
+        guard let inputs = session.availableInputs else { return false }
+        return !inputs.isEmpty
     }
 
     private func makeRecordingURL() throws -> URL {
@@ -723,6 +757,10 @@ final class MessageDetailViewController: BaseViewController, AVAudioRecorderDele
         } catch {
             showToast("Voice playback failed.", position: .bottom)
         }
+    }
+
+    private func deactivateAudioSession() {
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
     }
 }
 
