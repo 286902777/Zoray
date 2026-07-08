@@ -12,17 +12,18 @@ final class WalletViewController: BaseViewController {
     private var isPurchasing = false
 
     private let packages: [WalletPackage] = [
-        WalletPackage(amount: "400", price: "$0.99",  productId: "mjeuwwzfvtlxxhyx"),
-        WalletPackage(amount: "800", price: "$1.99",  productId: "atrstguztmdvmgif"),
+        WalletPackage(amount: "400", price: "$0.99",  productId: "sbmsikozsyuqqaer"),
+        WalletPackage(amount: "800", price: "$1.99",  productId: "ixgzymtqrarbfxsv"),
         WalletPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
-        WalletPackage(amount: "2450", price: "$4.99", productId: "tjfffowogdturgaw"),
-        WalletPackage(amount: "5150", price: "$9.99", productId: "cfhmabdnutsuvnks"),
-        WalletPackage(amount: "10800", price: "$19.99", productId: "zelzabkpgkmwlprl"),
+        WalletPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
+        WalletPackage(amount: "5150", price: "$9.99", productId: "ppametlxzpksjplo"),
+        WalletPackage(amount: "10800", price: "$19.99", productId: "zfwdfihxrathvrlh"),
         WalletPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
-        WalletPackage(amount: "29400", price: "$49.99", productId: "rfdqdszuycclkgre"),
+        WalletPackage(amount: "29400", price: "$49.99", productId: "vmmunujhdatmyoqe"),
         WalletPackage(amount: "34500", price: "$69.99", productId: "kefrldtwdiopynog"),
-        WalletPackage(amount: "63700", price: "$99.99", productId: "junafdwpeyzvanfx")
+        WalletPackage(amount: "63700", price: "$99.99", productId: "csusqrpcarunpkaq")
     ]
+
 //    ["3.99  1780  kibtegfnvwlsaxsi","39.99  19800  fmravldlhofgsixb","69.99  34500  kefrldtwdiopynog"]
     override func viewDidLoad() {
         super.viewDidLoad()
