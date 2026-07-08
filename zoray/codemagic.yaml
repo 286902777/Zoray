@@ -8,9 +8,9 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: io.codemagic.cmswiftly
+        bundle_identifier: com.zoray.shineSuper
       vars:
-        BUNDLE_ID: "io.codemagic.cmswiftly"
+        BUNDLE_ID: "com.zoray.shineSuper"
         XCODE_WORKSPACE: "zoray.xcworkspace"
         XCODE_SCHEME: "zoray"
         APP_STORE_APPLE_ID: 1555555551
