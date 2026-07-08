@@ -12,18 +12,18 @@ final class WalletViewController: BaseViewController {
     private var isPurchasing = false
 
     private let packages: [WalletPackage] = [
-        WalletPackage(amount: "400", price: "$0.99", productId: "mjeuwwzfvtlxxhyx"),
-        WalletPackage(amount: "800", price: "$1.99", productId: "atrstguztmdvmgif"),
-        WalletPackage(amount: "1290", price: "$2.99", productId: "3"),
+        WalletPackage(amount: "400", price: "$0.99",  productId: "mjeuwwzfvtlxxhyx"),
+        WalletPackage(amount: "800", price: "$1.99",  productId: "atrstguztmdvmgif"),
+        WalletPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
         WalletPackage(amount: "2450", price: "$4.99", productId: "tjfffowogdturgaw"),
         WalletPackage(amount: "5150", price: "$9.99", productId: "cfhmabdnutsuvnks"),
         WalletPackage(amount: "10800", price: "$19.99", productId: "zelzabkpgkmwlprl"),
-        WalletPackage(amount: "19800", price: "$29.99", productId: "2"),
+        WalletPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
         WalletPackage(amount: "29400", price: "$49.99", productId: "rfdqdszuycclkgre"),
-        WalletPackage(amount: "39500", price: "$69.99", productId: "1"),
+        WalletPackage(amount: "34500", price: "$69.99", productId: "kefrldtwdiopynog"),
         WalletPackage(amount: "63700", price: "$99.99", productId: "junafdwpeyzvanfx")
     ]
-//    ["3.99  1780  kibtegfnvwlsaxsi","14.99  7700  fmravldlhofgsixb","8.99  3950  kefrldtwdiopynog"]
+//    ["3.99  1780  kibtegfnvwlsaxsi","39.99  19800  fmravldlhofgsixb","69.99  34500  kefrldtwdiopynog"]
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -98,7 +98,7 @@ final class WalletViewController: BaseViewController {
             make.height.equalTo(92)
         }
 
-        balanceTitleLabel.text = "Balance"
+        balanceTitleLabel.text = "Account balance:"
         balanceTitleLabel.textColor = .white
         balanceTitleLabel.font = .systemFont(ofSize: 15, weight: .bold)
         balanceCardView.addSubview(balanceTitleLabel)
