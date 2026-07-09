@@ -1,10 +1,10 @@
 workflows:
   ios-native-quick-start:
-    name: AuthKey_MT378X3YTB
+    name: zoray
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: AuthKey_MT378X3YTB
+      app_store_connect: zoray
     environment:
       ios_signing:
         distribution_type: app_store
