@@ -7,13 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		179D6B842FF5186900E0B5A9 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = 179D6B832FF5186900E0B5A9 /* AGENTS.md */; };
 		17C774212FFB8B1400DF3CEC /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17C774202FFB8B1400DF3CEC /* StoreKit.framework */; };
 		C479BE0ABBD23A22F12C9670 /* Pods_zoray.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F9F2D64F40289BB70CCE2A /* Pods_zoray.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		179D6B832FF5186900E0B5A9 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 		17A8777D2FF5084B00E7FB21 /* zoray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zoray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17C774202FFB8B1400DF3CEC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		48577D72C871BDA883436858 /* Pods-zoray.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zoray.debug.xcconfig"; path = "Target Support Files/Pods-zoray/Pods-zoray.debug.xcconfig"; sourceTree = "<group>"; };
@@ -58,7 +56,6 @@
 		17A877742FF5084B00E7FB21 = {
 			isa = PBXGroup;
 			children = (
-				179D6B832FF5186900E0B5A9 /* AGENTS.md */,
 				17A8777F2FF5084B00E7FB21 /* zoray */,
 				17A8777E2FF5084B00E7FB21 /* Products */,
 				8C63350F13A7CA8D46EF7133 /* Pods */,
@@ -156,7 +153,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				179D6B842FF5186900E0B5A9 /* AGENTS.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
