@@ -1,4 +1,15 @@
 PODS:
+  - Adjust (5.7.0):
+    - Adjust/Adjust (= 5.7.0)
+  - Adjust/Adjust (5.7.0):
+    - AdjustSignature (= 3.67.0)
+  - AdjustSignature (3.67.0)
+  - FBAEMKit (18.1.0):
+    - FBSDKCoreKit_Basics (= 18.1.0)
+  - FBSDKCoreKit (18.1.0):
+    - FBAEMKit (= 18.1.0)
+    - FBSDKCoreKit_Basics (= 18.1.0)
+  - FBSDKCoreKit_Basics (18.1.0)
   - IQKeyboardCore (1.0.9)
   - IQKeyboardManagerSwift (8.0.3):
     - IQKeyboardManagerSwift/Appearance (= 8.0.3)
@@ -47,12 +58,19 @@ PODS:
   - SnapKit (5.7.1)
 
 DEPENDENCIES:
+  - Adjust
+  - FBSDKCoreKit
   - IQKeyboardManagerSwift
   - RealmSwift (= 20.0.4)
   - SnapKit (~> 5.7)
 
 SPEC REPOS:
   trunk:
+    - Adjust
+    - AdjustSignature
+    - FBAEMKit
+    - FBSDKCoreKit
+    - FBSDKCoreKit_Basics
     - IQKeyboardCore
     - IQKeyboardManagerSwift
     - IQKeyboardNotification
@@ -66,6 +84,11 @@ SPEC REPOS:
     - SnapKit
 
 SPEC CHECKSUMS:
+  Adjust: 3fbf26d0880cb25d15653d68278c0c8771718458
+  AdjustSignature: 9498705a4ac67b719e31828be4d74fbb8656950c
+  FBAEMKit: 64088ff0380f50e4a56e2ee07d984f7f1aef7595
+  FBSDKCoreKit: 8390ea3a8fac186f444275f31d7512e760b47cba
+  FBSDKCoreKit_Basics: 3a0005c78b355388bf2df5c6dbe6381b77ea4be3
   IQKeyboardCore: 250a88dfc713b2ecbe1dce250811d054fc016959
   IQKeyboardManagerSwift: 7f6a9a1e2285732d3ff5f485ff921215253ea77e
   IQKeyboardNotification: 3b9bc812a5af2cf97df08a363d9daa9fc0dc1848
@@ -78,6 +101,6 @@ SPEC CHECKSUMS:
   RealmSwift: 84f36320f6133dea78d05c55bb46bba4387d6828
   SnapKit: d612e99e678a2d3b95bf60b0705ed0a35c03484a
 
-PODFILE CHECKSUM: 87d77f3259b6773873a65a9a61d4a36c69b933d6
+PODFILE CHECKSUM: be66642189e7a15c38ba72dd964c2aab25670b89
 
 COCOAPODS: 1.16.2

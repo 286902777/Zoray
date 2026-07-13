@@ -24,6 +24,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         } else {
             AppRootController.shared.showMain(in: window)
         }
+        RouteManager.shared.request()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
