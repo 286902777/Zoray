@@ -118,7 +118,7 @@ final class SettingsViewController: BaseViewController {
             try AuthService.shared.deleteCurrentUser()
             AppRootController.shared.showLogin(in: view.window)
         } catch {
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
 }

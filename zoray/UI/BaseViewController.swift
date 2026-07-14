@@ -40,14 +40,9 @@ class BaseViewController: UIViewController {
         return customNavigationBar.bottomAnchor
     }
 
-    func showAlert(title: String = "title", message: String) {
-        showToast(message)
-    }
-
     func showToast(_ message: String, position: ToastView.Position = .center, duration: TimeInterval = 1.8) {
         ToastView.show(message: message, in: view, position: position, duration: duration)
     }
-
     func errorMessage(from error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }

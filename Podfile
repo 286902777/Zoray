@@ -10,4 +10,5 @@ target 'zoray' do
   pod 'IQKeyboardManagerSwift'
   pod 'FBSDKCoreKit'
   pod 'Adjust'
+  pod 'ScreenShield'
 end

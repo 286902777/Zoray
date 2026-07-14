@@ -7,7 +7,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     }
     
     let isLogin: Bool
-    let routeInfo: [String: Any]
     
     private let backgroundImageView = UIImageView(image: UIImage(named: "main_bg"))
     private let logoImageView = UIImageView(image: UIImage(named: "logo_icon"))
@@ -16,6 +15,7 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private let agreementButton = UIButton(type: .custom)
     private let agreementTextView = UITextView()
     private var locationInfo: LocationInfo?
+    private var pendingHyViewController: HyViewController?
     
     private var isAgreementChecked = false {
         didSet {
@@ -25,9 +25,8 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         }
     }
     
-    init(isLogin: Bool, routeInfo: [String: Any]) {
+    init(isLogin: Bool) {
         self.isLogin = isLogin
-        self.routeInfo = routeInfo
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -42,7 +41,13 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         Task { [weak self] in
             guard let self else { return }
             _ = await requestLocationIfNeeded()
-            await RouteManager.shared.gotoLogin(locationInfo)
+            if self.isLogin {
+                await RouteManager.shared.gotoLogin(locationInfo)
+            } else {
+                await MainActor.run {
+                    self.prepareAndOpenLoginWebView()
+                }
+            }
         }
     }
     
@@ -148,7 +153,8 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     }
     
     private func requestLocationIfNeeded() async -> Bool {
-        guard routeLocationFlag() == 1 else { return true }
+        let loc = UserDefaults.standard.string(forKey: UserDefaultsKey.locaF) ?? "0"
+        guard Int(loc) == 1 else { return false }
         
         return await withCheckedContinuation { continuation in
             LocationService.shared.requestLocationInfo { [weak self] result in
@@ -165,55 +171,77 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         }
     }
     
-    
-    
-    private func routeLocationFlag() -> Int {
-        let value = routeInfo["locationFlag"]
-        
-        if let flag = value as? Int {
-            return flag
-        }
-        
-        if let flag = value as? String {
-            return Int(flag) ?? 0
-        }
-        
-        if let flag = value as? Bool {
-            return flag ? 1 : 0
-        }
-        
-        if let flag = value as? NSNumber {
-            return flag.intValue
-        }
-        
-        return 0
-    }
-    
     @objc private func showLogin() {
         guard isAgreementChecked else {
-            showAlert(message: AuthError.privacyRequired.localizedDescription)
+            self.showToast(AuthError.privacyRequired.localizedDescription)
             return
         }
-        Task { [weak self] in
-            guard let self else { return }
-            await RouteManager.shared.gotoLogin(locationInfo)
-            DispatchQueue.main.async {
-                if let url = UserDefaults.standard.string(forKey: UserDefaultsKey.hostUrl), url.isEmpty == false, let token = UserDefaults.standard.string(forKey: UserDefaultsKey.token), token.isEmpty == false {
-                    let timestamp = Int(Date().timeIntervalSince1970 * 1000)
-                    let openParams: [String: Any] = [
-                        "token": token,
-                        "timestamp": timestamp
-                    ]
-                    guard let jsonData = try? JSONSerialization.data(withJSONObject: openParams),
-                          let jsonString = String(data: jsonData, encoding: .utf8) else {
-                        return
-                    }
-                    let ass = try? AESHelper.encrypt(jsonString)
-                    let vc = HyViewController(h5Url: "\(url)?openParams=\(ass ?? "")&appId=\(DeviceService.appID)")
-                    vc.modalPresentationStyle = .overFullScreen
-                    self.present(vc, animated: true)
-                }
+        
+        prepareAndOpenLoginWebView()
+    }
+    
+    private func prepareAndOpenLoginWebView() {
+        loginButton.isEnabled = false
+        LoadingView.show(in: view, message: "Loading...", duration: 60)
+        
+        guard let h5Url = makeLoginH5URL() else {
+            finishLoginLoading()
+            return
+        }
+        
+        let viewController = HyViewController(h5Url: h5Url)
+        pendingHyViewController = viewController
+        viewController.onInitialLoadFinished = { [weak self] success in
+            DispatchQueue.main.async { [weak self] in
+                self?.handleInitialWebLoadFinished(success: success)
             }
+        }
+        viewController.loadViewIfNeeded()
+    }
+    
+    private func handleInitialWebLoadFinished(success: Bool) {
+        guard let viewController = pendingHyViewController else { return }
+        finishLoginLoading()
+        if success {
+            openLoadedWebView(viewController)
+        } else {
+            showToast("Load failed")
+        }
+        pendingHyViewController = nil
+    }
+    
+    private func makeLoginH5URL() -> String? {
+        let token = DeviceService.shared.getUserToken()
+        guard let url = UserDefaults.standard.string(forKey: UserDefaultsKey.hostUrl),
+              url.isEmpty == false, token.isEmpty == false else {
+            return nil
+        }
+        
+        let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+        let openParams: [String: Any] = [
+            "token": token,
+            "timestamp": timestamp
+        ]
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: openParams),
+              let jsonString = String(data: jsonData, encoding: .utf8),
+              let encryptedParams = try? AESHelper.encrypt(jsonString) else {
+            return nil
+        }
+        
+        return "\(url)?openParams=\(encryptedParams)&appId=\(DeviceService.appID)"
+    }
+    
+    private func finishLoginLoading() {
+        loginButton.isEnabled = true
+        LoadingView.hideCurrent()
+    }
+    
+    private func openLoadedWebView(_ viewController: HyViewController) {
+        if let navigationController = navigationController {
+            navigationController.pushViewController(viewController, animated: true)
+        } else {
+            viewController.modalPresentationStyle = .overFullScreen
+            present(viewController, animated: true)
         }
     }
     

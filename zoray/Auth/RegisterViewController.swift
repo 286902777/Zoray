@@ -134,7 +134,7 @@ final class RegisterViewController: BaseViewController {
             let viewController = PersonalInformationViewController(userId: user.id)
             navigationController?.pushViewController(viewController, animated: true)
         } catch {
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
 }

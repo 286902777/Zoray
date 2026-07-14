@@ -138,7 +138,7 @@ final class ForgotPasswordViewController: BaseViewController {
                 self?.navigationController?.popViewController(animated: true)
             }
         } catch {
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
 }

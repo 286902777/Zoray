@@ -8,18 +8,18 @@
 import Foundation
 import UIKit
 import AdjustSdk
-
+import FBSDKCoreKit
 
 struct UserInfo: Codable {
     let code: String
-    let message: String
-    let result: String
+    let message: String?
+    let result: String?
 }
 
 enum UserDefaultsKey {
-    static let token = "zoray.token"
-    static let imToken = "zoray.imToken"
-    static let userId = "zoray.userId"
+    static let isOpenH = "zoray.isOpenH"
+    static let pushToken = "zoray.pushToken"
+    static let locaF = "zoray.locationFlag"
     static let hostUrl = "HostUrl"
 }
 
@@ -49,14 +49,16 @@ class RouteManager {
             case .success(let data):
                 do {
                     let user = try JSONDecoder().decode(UserInfo.self, from: data)
-                    if user.code == "0000", user.result.isEmpty == false {
-                        let res = AESHelper.decrypt(user.result)
+                    if user.code == "0000", user.result?.isEmpty == false {
+                        let res = AESHelper.decrypt(user.result ?? "")
                         guard let resData = res.data(using: .utf8) else {
                             return
                         }
                         do {
                             if let dict = try JSONSerialization.jsonObject(with: resData, options: []) as? [String: Any] {
+                                UserDefaults.standard.setValue(true, forKey: UserDefaultsKey.isOpenH)
                                 self.saveStringValue(dict["openValue"], forKey: UserDefaultsKey.hostUrl)
+                                self.saveStringValue(dict["locationFlag"], forKey: UserDefaultsKey.locaF)
                                 DispatchQueue.main.async {
                                     if dict["loginFlag"] as? Int == 1 {
                                         self.openLogin(false, dict)
@@ -98,7 +100,7 @@ class RouteManager {
     }
     
     private func openLogin(_ isLogin: Bool, _ dict: [String: Any]) {
-        let routeLoginViewController = RouteLoginViewController(isLogin: isLogin, routeInfo: dict)
+        let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
         AppRootController.shared.switchRoot(routeLoginViewController, in: currentWindow())
     }
     
@@ -109,7 +111,7 @@ class RouteManager {
     }
     
     func gotoLogin(_ location: LocationInfo?) async {
-//        let adid = await Adjust.adid() ?? ""
+        let adid = await Adjust.adid() ?? ""
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -117,8 +119,8 @@ class RouteManager {
                                       "pushToken": DeviceService.shared.pushToken,
                                       "loginToken": DeviceService.shared.getUserToken(),
                                       "appId": DeviceService.appID]
-        var parameters: [String : Any] = ["zoraya": "ad112312",
-                                          "zorayd": DeviceService.shared.getUserToken(),
+        var parameters: [String : Any] = ["zoraya": adid,
+                                          "zorayd": DeviceService.shared.getUserPassword(),
                                           "zorayn": DeviceService.shared.getDeviceID()]
         if let loc = location {
             parameters["zorayv"] = [
@@ -137,17 +139,19 @@ class RouteManager {
             case .success(let data):
                 do {
                     let user = try JSONDecoder().decode(UserInfo.self, from: data)
-                    if user.code == "0000", user.result.isEmpty == false {
-                        let res = AESHelper.decrypt(user.result)
+                    if user.code == "0000", user.result?.isEmpty == false {
+                        let res = AESHelper.decrypt(user.result ?? "")
                         guard let resData = res.data(using: .utf8) else {
                             return
                         }
                         do {
                             if let dict = try JSONSerialization.jsonObject(with: resData, options: []) as? [String: Any] {
                                 print(dict)
-                                self.saveLoginInfo(from: dict)
+                                if let token = dict["token"] as? String, token.count > 0 {
+                                    DeviceService.shared.saveUserToken(token)
+                                }
                                 if let pass = dict["password"] as? String, pass.count > 0 {
-                                    DeviceService.shared.saveUserToken(pass)
+                                    DeviceService.shared.saveUserPassword(pass)
                                 }
                             }
                         } catch {
@@ -161,12 +165,6 @@ class RouteManager {
                 print("requestAppInfo failed:", error.localizedDescription)
             }
         }
-    }
-    
-    private func saveLoginInfo(from dict: [String: Any]) {
-        saveStringValue(dict["token"], forKey: UserDefaultsKey.token)
-        saveStringValue(dict["imToken"], forKey: UserDefaultsKey.imToken)
-        saveStringValue(dict["userId"], forKey: UserDefaultsKey.userId)
     }
     
     private func saveStringValue(_ value: Any?, forKey key: String) {
@@ -184,5 +182,108 @@ class RouteManager {
         }
         
         return nil
+    }
+    
+    func openWebTime(_ time: String) {
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
+        let head: [String: String] = ["Content-Type": "application/json",
+                                      "appVersion": appVersion,
+                                      "deviceNo": DeviceService.shared.getDeviceID(),
+                                      "pushToken": DeviceService.shared.pushToken,
+                                      "loginToken": DeviceService.shared.getUserToken(),
+                                      "appId": DeviceService.appID]
+        let parameters: [String : Any] = ["zorayo": time]
+        
+        NetworkService.shared.requestData(
+            "opi/v1/zorayt",
+            method: .post,
+            parameters: parameters, headers: head
+        ) { result in
+            switch result {
+            case .success(let data):
+                do {
+                    let user = try JSONDecoder().decode(UserInfo.self, from: data)
+                    print("JSON success: \(user.code)")
+                } catch {
+                    print("JSON fail: \(error.localizedDescription)")
+                }
+            case .failure(let error):
+                print("requestAppInfo failed:", error.localizedDescription)
+            }
+        }
+    }
+    
+    func payRequest(_ tNo: String, _ orderCode: String, _ receipt: String, revenue: Double? = nil, currency: String? = nil) {
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
+        let head: [String: String] = ["Content-Type": "application/json",
+                                      "appVersion": appVersion,
+                                      "deviceNo": DeviceService.shared.getDeviceID(),
+                                      "pushToken": DeviceService.shared.pushToken,
+                                      "loginToken": DeviceService.shared.getUserToken(),
+                                      "appId": DeviceService.appID]
+        let orderDic: [String: Any] = ["orderCode": orderCode]
+        if let dataDict = try? JSONSerialization.data(withJSONObject: orderDic),
+           let jsonOrder = String(data: dataDict, encoding: .utf8) {
+            let parameters: [String : Any] = ["zorayt": tNo,
+                                              "zorayp": receipt,
+                                              "zorayc": jsonOrder]
+            NetworkService.shared.requestData(
+                "opi/v1/zorayp",
+                method: .post,
+                parameters: parameters, headers: head
+            ) { [weak self] result in
+                guard let self = self else { return }
+                switch result {
+                case .success(let data):
+                    let resss = AESHelper.decrypt(String(data: data, encoding: .utf8) ?? "")
+                    print(resss)
+                    do {
+                        let user = try JSONDecoder().decode(UserInfo.self, from: data)
+                        print("JSON success: \(user.code)")
+                        if user.code == "0000" {
+                            self.trackPaymentRevenue(revenue: revenue, currency: currency)
+                            self.showPaymentSuccessToast()
+                        } else {
+                            self.showPaymentFailedToast()
+                        }
+                    } catch {
+                        print("JSON fail: \(error.localizedDescription)")
+                        self.showPaymentFailedToast()
+                    }
+                case .failure(let error):
+                    print("requestAppInfo failed:", error.localizedDescription)
+                    self.showPaymentFailedToast()
+                }
+            }
+        }
+    }
+    
+    private func trackPaymentRevenue(revenue: Double?, currency: String?) {
+        guard let revenue, let currency, !currency.isEmpty else { return }
+        
+        let event = ADJEvent(eventToken: "13vm42")
+        event?.setRevenue(revenue, currency: currency)
+        Adjust.trackEvent(event)
+        AppEvents.shared.logPurchase(
+            amount: revenue,
+            currency: currency,
+            parameters: [
+                AppEvents.ParameterName("fb_mobile_purchase"): "true"
+            ]
+        )
+    }
+    
+    private func showPaymentSuccessToast() {
+        DispatchQueue.main.async { [weak self] in
+            guard let view = self?.currentWindow() else { return }
+            ToastView.show(message: "Payment Success.", in: view, position: .center)
+        }
+    }
+    
+    private func showPaymentFailedToast() {
+        DispatchQueue.main.async { [weak self] in
+            guard let view = self?.currentWindow() else { return }
+            ToastView.show(message: "Payment failed.", in: view, position: .center)
+        }
     }
 }

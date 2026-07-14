@@ -165,7 +165,7 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
     
     @objc private func showLogin() {
         guard isAgreementChecked else {
-            showAlert(message: AuthError.privacyRequired.localizedDescription)
+            showToast(AuthError.privacyRequired.localizedDescription)
             return
         }
         navigationController?.pushViewController(LoginViewController(), animated: true)
@@ -173,7 +173,7 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
     
     @objc private func loginAsGuest() {
         guard isAgreementChecked else {
-            showAlert(message: AuthError.privacyRequired.localizedDescription)
+            showToast(AuthError.privacyRequired.localizedDescription)
             return
         }
         
@@ -187,7 +187,7 @@ final class StartViewController: BaseViewController, UITextViewDelegate {
             try AuthService.shared.loginAsGuest()
             AppRootController.shared.showMain(in: view.window)
         } catch {
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
     

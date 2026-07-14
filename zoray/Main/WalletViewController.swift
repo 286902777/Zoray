@@ -10,19 +10,7 @@ final class WalletViewController: BaseViewController {
     private let balanceValueLabel = UILabel()
     private let packagesStackView = UIStackView()
     private var isPurchasing = false
-
-    private let packages: [WalletPackage] = [
-        WalletPackage(amount: "400", price: "$0.99",  productId: "sbmsikozsyuqqaer"),
-        WalletPackage(amount: "800", price: "$1.99",  productId: "ixgzymtqrarbfxsv"),
-        WalletPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
-        WalletPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
-        WalletPackage(amount: "5150", price: "$9.99", productId: "ppametlxzpksjplo"),
-        WalletPackage(amount: "10800", price: "$19.99", productId: "zfwdfihxrathvrlh"),
-        WalletPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
-        WalletPackage(amount: "29400", price: "$49.99", productId: "vmmunujhdatmyoqe"),
-        WalletPackage(amount: "34500", price: "$69.99", productId: "kefrldtwdiopynog"),
-        WalletPackage(amount: "63700", price: "$99.99", productId: "csusqrpcarunpkaq")
-    ]
+    private let paymentService = WalletPaymentService.shared
 
 //    ["3.99  1780  kibtegfnvwlsaxsi","39.99  19800  fmravldlhofgsixb","69.99  34500  kefrldtwdiopynog"]
     override func viewDidLoad() {
@@ -127,6 +115,7 @@ final class WalletViewController: BaseViewController {
             make.leading.trailing.equalToSuperview().inset(22)
         }
 
+        let packages = paymentService.packages
         stride(from: 0, to: packages.count, by: 3).forEach { startIndex in
             let rowStackView = UIStackView()
             rowStackView.axis = .horizontal
@@ -167,17 +156,8 @@ final class WalletViewController: BaseViewController {
         balanceValueLabel.text = "\(BalanceService.shared.currentBalance())"
     }
 
-    private func purchase(_ package: WalletPackage) {
+    private func purchase(_ package: WalletPaymentPackage) {
         guard !isPurchasing else { return }
-        guard let currentUser = AuthService.shared.currentUser() else {
-            showToast("Please log in first.", position: .bottom)
-            return
-        }
-        let userId = currentUser.id
-        guard let amount = Int(package.amount) else {
-            showToast("Invalid product amount.", position: .bottom)
-            return
-        }
 
         isPurchasing = true
         view.isUserInteractionEnabled = false
@@ -186,15 +166,14 @@ final class WalletViewController: BaseViewController {
         Task { [weak self] in
             guard let self = self else { return }
             do {
-                let didPurchase = try await InAppPurchaseService.shared.purchase(productId: package.productId)
+                let result = try await paymentService.purchase(package)
                 await MainActor.run {
                     self.finishPurchasing()
-                    guard didPurchase else { return }
-                    do {
-                        try BalanceService.shared.addBalance(amount, for: userId)
+                    switch result {
+                    case .success:
                         self.showToast("Purchase successful.", position: .bottom)
-                    } catch {
-                        self.showToast(self.errorMessage(from: error), position: .bottom)
+                    case .cancelled:
+                        break
                     }
                 }
             } catch {
@@ -221,22 +200,16 @@ final class WalletViewController: BaseViewController {
     }
 }
 
-private struct WalletPackage {
-    let amount: String
-    let price: String
-    let productId: String
-}
-
 private final class WalletPackageView: UIControl {
-    var onTap: ((WalletPackage) -> Void)?
+    var onTap: ((WalletPaymentPackage) -> Void)?
 
-    private let package: WalletPackage
+    private let package: WalletPaymentPackage
     private let contentStackView = UIStackView()
     private let iconImageView = UIImageView(image: UIImage(named: "stone_s"))
     private let amountLabel = UILabel()
     private let priceLabel = UILabel()
 
-    init(package: WalletPackage) {
+    init(package: WalletPaymentPackage) {
         self.package = package
         super.init(frame: .zero)
         amountLabel.text = package.amount

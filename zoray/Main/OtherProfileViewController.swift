@@ -299,7 +299,7 @@ final class OtherProfileViewController: BaseViewController {
     private func playPostVideo(_ post: PostObject) {
         guard let user = displayedUser else { return }
         guard let videoURL = localVideoURL(from: post.videoURL) else {
-            showAlert(message: "No video is available for this post.")
+            showToast("No video is available for this post.")
             return
         }
 

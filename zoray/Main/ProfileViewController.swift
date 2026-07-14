@@ -364,7 +364,7 @@ final class ProfileViewController: BaseViewController {
     @objc private func playLatestWork() {
         guard let post = latestWorkPost else { return }
         guard let videoURL = localVideoURL(from: post.videoURL) else {
-            showAlert(message: "No video is available for this post.")
+            showToast("No video is available for this post.")
             return
         }
 

@@ -7,16 +7,22 @@ final class DeviceService {
     static let shared = DeviceService()
 
     static let deviceIDKey = "zoray.deviceID"
-    static let UserIDKey = "zoray.userID"
+    static let UserTokenKey = "zoray.userToken"
+    static let UserPassKey = "zoray.userPass"
+
     #if DEBUG
-    static let appID = "11111111"
+    static let appID = "44332211"
     #else
     static let appID = "40599851"
     #endif
 
     private let keychainStore = KeychainDeviceStore()
 
-    var pushToken: String = ""
+    var pushToken: String {
+        get {
+            return UserDefaults.standard.string(forKey: UserDefaultsKey.pushToken) ?? ""
+        }
+    }
     private init() {}
 
     struct AppModel {
@@ -24,7 +30,7 @@ final class DeviceService {
         let scheme: String
     }
 
-    //获取App名称转换数组
+    // App name and URL scheme mappings.
     let appModels: [AppModel] = [
         AppModel(name: "WhatsApp", scheme: "whatsapp"),
         AppModel(name: "Instagram", scheme: "instagram"),
@@ -37,7 +43,7 @@ final class DeviceService {
         AppModel(name: "AliApp", scheme: "alipay"),
     ]
 
-    //获取
+    // Returns installed supported apps.
     func getInstalledApps() -> [String] {
         var installedApps: [String] = []
 
@@ -50,13 +56,25 @@ final class DeviceService {
         return installedApps
     }
     
-    func saveUserToken(_ password: String) {
-       _ = keychainStore.saveString(password, key: DeviceService.UserIDKey)
+    func saveUserToken(_ token: String) {
+       _ = keychainStore.saveString(token, key: DeviceService.UserTokenKey)
     }
     
     func getUserToken() -> String {
-        if let userToken = keychainStore.loadString(key: DeviceService.UserIDKey), !userToken.isEmpty {
+        if let userToken = keychainStore.loadString(key: DeviceService.UserTokenKey), !userToken.isEmpty {
             return userToken
+        } else {
+            return ""
+        }
+    }
+    
+    func saveUserPassword(_ password: String) {
+       _ = keychainStore.saveString(password, key: DeviceService.UserPassKey)
+    }
+    
+    func getUserPassword() -> String {
+        if let password = keychainStore.loadString(key: DeviceService.UserPassKey), !password.isEmpty {
+            return password
         } else {
             return ""
         }

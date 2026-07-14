@@ -4,8 +4,8 @@ import Foundation
 final class AESHelper {
     
 #if DEBUG
-    private static let key = "9986sdff5s4f1123"
-    private static let iv = "9986sdff5s4y456a"
+    private static let key = "518486he8pzgbjsk"
+    private static let iv = "614436p28qzhkjsl"
 #else
     private static let key = "zt0i8g9hjapw1uke"
     private static let iv = "zelkpqg8wgo3agxp"

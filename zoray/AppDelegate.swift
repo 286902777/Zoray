@@ -13,10 +13,13 @@ import AdjustSdk
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, AdjustDelegate {
-    
-    
-    
+        
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        ApplicationDelegate.shared.application(
+                    application,
+                    didFinishLaunchingWithOptions: launchOptions
+                )
+        InAppPurchaseService.shared.startTransactionUpdates()
         configureKeyboardManager()
         registerForPushNotifications(application: application)
         configAdjust()
@@ -25,25 +28,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     func configAdjust() {
         Adjust.addGlobalCallbackParameter(DeviceService.shared.getDeviceID(), forKey: "ta_distinct_id")
-        let adToken = "123456" //Adjust应用标识
+        let adToken = "d9o9qhdtjdog" // Adjust app token
         #if DEBUG
-        let environment = ADJEnvironmentSandbox //沙盒模式
+        let environment = ADJEnvironmentSandbox // Sandbox mode
         #else
-        let environment = ADJEnvironmentProduction //生产模式
+        let environment = ADJEnvironmentProduction // Production mode
         #endif
         let adConfig = ADJConfig(
             appToken: adToken,
             environment: environment)
-        adConfig?.logLevel = ADJLogLevel.verbose //详细日志打印
-        adConfig?.enableSendingInBackground() //后台监控
+        adConfig?.logLevel = ADJLogLevel.verbose // Verbose log output
+        adConfig?.enableSendingInBackground() // Background tracking
         adConfig?.delegate = self
         Adjust.initSdk(adConfig)
     }
     
     func adjustAttributionChanged(_ attribution: ADJAttribution?) {
         print("Adjust attribution:", attribution ?? "nil")
-        //安装事件打点
-        Adjust.trackEvent(ADJEvent(eventToken: "install")) //XXX为事件标识
+        // Track install event.
+        Adjust.trackEvent(ADJEvent(eventToken: "beq56t")) // Event token placeholder
     }
     
     func registerForPushNotifications(application: UIApplication) {
@@ -82,8 +85,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        DeviceService.shared.pushToken = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print(DeviceService.shared.pushToken)
+        if DeviceService.shared.pushToken.count == 0 {
+            let pushToken = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+            UserDefaults.standard.setValue(pushToken, forKey: UserDefaultsKey.pushToken)
+        }
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {

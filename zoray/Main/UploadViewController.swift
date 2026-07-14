@@ -157,12 +157,12 @@ final class UploadViewController: BaseViewController {
         let normalizedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedBody = body.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedTitle.isEmpty, !normalizedBody.isEmpty else {
-            showAlert(message: "Please enter a title and copywriting.")
+            showToast("Please enter a title and copywriting.")
             return
         }
 
         guard let selectedVideoURL else {
-            showAlert(message: "Please select a video.")
+            showToast("Please select a video.")
             return
         }
         let videoFileName = selectedVideoFileName ?? selectedVideoURL.lastPathComponent
@@ -187,7 +187,7 @@ final class UploadViewController: BaseViewController {
             )
             showPostCreatedFeedback()
         } catch {
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
 
@@ -282,7 +282,7 @@ extension UploadViewController: PHPickerViewControllerDelegate {
         }
 
         guard let videoTypeIdentifier else {
-            showAlert(message: "Please select a video file.")
+            showToast("Please select a video file.")
             return
         }
 
@@ -291,14 +291,14 @@ extension UploadViewController: PHPickerViewControllerDelegate {
 
             if let error {
                 DispatchQueue.main.async {
-                    self.showAlert(message: error.localizedDescription)
+                    self.showToast(error.localizedDescription)
                 }
                 return
             }
 
             guard let url else {
                 DispatchQueue.main.async {
-                    self.showAlert(message: "Failed to read the video file.")
+                    self.showToast("Failed to read the video file.")
                 }
                 return
             }
@@ -310,7 +310,7 @@ extension UploadViewController: PHPickerViewControllerDelegate {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.showAlert(message: "Failed to save the video. Please try again.")
+                    self.showToast("Failed to save the video. Please try again.")
                 }
             }
         }

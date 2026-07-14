@@ -26,9 +26,9 @@ enum NetworkEnvironment {
         switch self {
         case .debug:
             // Debug and Release hosts are separated here for future changes.
-            return URL(string: "https://opi.cphub.link/")!
+            return URL(string: "https://opi.ra7hhtxf.link/")!
         case .release:
-            return URL(string: "https://opi.cphub.link/")!
+            return URL(string: "https://opi.ra7hhtxf.link/")!
         }
     }
 }

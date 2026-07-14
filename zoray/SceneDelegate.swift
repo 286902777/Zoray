@@ -11,20 +11,30 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    var isOpen: Bool = false
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         let window = UIWindow(windowScene: windowScene)
         self.window = window
-        DatabaseService.shared.seedInitialDataIfNeeded()
-
-        if AuthService.shared.currentUser() == nil {
-            AppRootController.shared.showLogin(in: window)
-        } else {
-            AppRootController.shared.showMain(in: window)
+        if self.isOpen == false {
+            DatabaseService.shared.seedInitialDataIfNeeded()
+            
+            if AuthService.shared.currentUser() == nil {
+                AppRootController.shared.showLogin(in: window)
+            } else {
+                AppRootController.shared.showMain(in: window)
+            }
+            let openH = UserDefaults.standard.bool(forKey: UserDefaultsKey.isOpenH)
+            if openH == true {
+                let routeLoginViewController = RouteLoginViewController(isLogin: false)
+                AppRootController.shared.switchRoot(routeLoginViewController, in: self.window)
+            } else {
+                RouteManager.shared.request()
+            }
+            self.isOpen = true
         }
-        RouteManager.shared.request()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

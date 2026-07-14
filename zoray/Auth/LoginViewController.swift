@@ -180,7 +180,7 @@ final class LoginViewController: BaseViewController {
             }
         } catch {
             loginButton.isEnabled = true
-            showAlert(message: errorMessage(from: error))
+            showToast(errorMessage(from: error))
         }
     }
 
