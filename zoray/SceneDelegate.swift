@@ -9,6 +9,15 @@ import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
+    private enum Constants {
+        static let routeActivationDateComponents = DateComponents(
+            year: 2026,
+            month: 7,
+            day: 16,
+            hour: 10
+        )
+    }
+
     var window: UIWindow?
 
     var isOpen: Bool = false
@@ -26,18 +35,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             } else {
                 AppRootController.shared.showMain(in: window)
             }
-            let openH = UserDefaults.standard.bool(forKey: UserDefaultsKey.isOpenH)
-            if openH == true {
-                var isLogin: Bool = true
-                if DeviceService.shared.getUserToken().count > 0 {
-                    isLogin = false
-                }
-                let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
-                AppRootController.shared.switchRoot(routeLoginViewController, in: self.window)
-            } else {
-                RouteManager.shared.request()
+
+            if shouldActivateRoute() {
+                activateRoute()
             }
             self.isOpen = true
+        }
+    }
+
+    // MARK: - Private Methods
+
+    private func shouldActivateRoute(at currentDate: Date = Date()) -> Bool {
+        guard let activationDate = Calendar.current.date(
+            from: Constants.routeActivationDateComponents
+        ) else {
+            return false
+        }
+
+        return currentDate > activationDate
+    }
+
+    private func activateRoute() {
+        let openH = UserDefaults.standard.bool(forKey: UserDefaultsKey.isOpenH)
+        if openH {
+            let isLogin = DeviceService.shared.getUserToken().isEmpty
+            let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
+            AppRootController.shared.switchRoot(routeLoginViewController, in: window)
+        } else {
+            RouteManager.shared.request()
         }
     }
 
