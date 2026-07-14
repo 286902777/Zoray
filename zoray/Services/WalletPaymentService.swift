@@ -29,17 +29,28 @@ final class WalletPaymentService {
     static let shared = WalletPaymentService()
     
     let packages: [WalletPaymentPackage] = [
-        WalletPaymentPackage(amount: "400", price: "$0.99", productId: "sbmsikozsyuqqaer"),
-        WalletPaymentPackage(amount: "800", price: "$1.99", productId: "ixgzymtqrarbfxsv"),
-        WalletPaymentPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
-        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
-//        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "dxismgcwewhrtezo"),//dxismgcwewhrtezo
-        WalletPaymentPackage(amount: "5150", price: "$9.99", productId: "ppametlxzpksjplo"),
-        WalletPaymentPackage(amount: "10800", price: "$19.99", productId: "zfwdfihxrathvrlh"),
-        WalletPaymentPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
-        WalletPaymentPackage(amount: "29400", price: "$49.99", productId: "vmmunujhdatmyoqe"),
-        WalletPaymentPackage(amount: "34500", price: "$69.99", productId: "kefrldtwdiopynog"),
-        WalletPaymentPackage(amount: "63700", price: "$99.99", productId: "csusqrpcarunpkaq")
+//        'lvbsvhxcgcrvesor', //0.99
+//        'dxismgcwewhrtezo', //4.99
+//        'khtxlcejaxmqcsra', //9.99
+//        'yadwwvxspgxwlndb', //19.99
+//        'qnrcuelbtiuflyky', //49.99
+//        'ymohxnvpkqxutvab', //99.99
+        WalletPaymentPackage(amount: "400", price: "$0.99", productId: "lvbsvhxcgcrvesor"),
+        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "dxismgcwewhrtezo"),
+        WalletPaymentPackage(amount: "5150", price: "$9.99", productId: "khtxlcejaxmqcsra"),
+        WalletPaymentPackage(amount: "10800", price: "$19.99", productId: "yadwwvxspgxwlndb"),
+        WalletPaymentPackage(amount: "29400", price: "$49.99", productId: "qnrcuelbtiuflyky"),
+        WalletPaymentPackage(amount: "63700", price: "$99.99", productId: "ymohxnvpkqxutvab")
+//        WalletPaymentPackage(amount: "400", price: "$0.99", productId: "sbmsikozsyuqqaer"),
+//        WalletPaymentPackage(amount: "800", price: "$1.99", productId: "ixgzymtqrarbfxsv"),
+//        WalletPaymentPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
+//        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
+//        WalletPaymentPackage(amount: "5150", price: "$9.99", productId: "ppametlxzpksjplo"),
+//        WalletPaymentPackage(amount: "10800", price: "$19.99", productId: "zfwdfihxrathvrlh"),
+//        WalletPaymentPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
+//        WalletPaymentPackage(amount: "29400", price: "$49.99", productId: "vmmunujhdatmyoqe"),
+//        WalletPaymentPackage(amount: "34500", price: "$69.99", productId: "kefrldtwdiopynog"),
+//        WalletPaymentPackage(amount: "63700", price: "$99.99", productId: "csusqrpcarunpkaq")
     ]
     
     private init() {}

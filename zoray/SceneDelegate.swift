@@ -36,9 +36,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 AppRootController.shared.showMain(in: window)
             }
 
-            if shouldActivateRoute() {
+//            if shouldActivateRoute() {
                 activateRoute()
-            }
+//            }
             self.isOpen = true
         }
     }

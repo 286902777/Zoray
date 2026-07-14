@@ -3,13 +3,10 @@ import Foundation
 
 final class AESHelper {
     
-#if DEBUG
     private static let key = "518486he8pzgbjsk"
     private static let iv = "614436p28qzhkjsl"
-#else
-    private static let key = "zt0i8g9hjapw1uke"
-    private static let iv = "zelkpqg8wgo3agxp"
-#endif
+//    private static let key = "zt0i8g9hjapw1uke"
+//    private static let iv = "zelkpqg8wgo3agxp"
 
     private init() {}
 

@@ -80,11 +80,7 @@ class RouteManager {
     
     private func makeAppInfoParameters() -> [String: Any] {
         let deviceService = DeviceService.shared
-#if DEBUG
-        let debug: Int = 1
-#else
         let debug: Int = 0
-#endif
         let opiBody: [String: Any] = [
             "zorayd": deviceService.isSIMCardInserted() ? 1 : 0,
             "zorayn": deviceService.isVPNEnabled() ? 1 : 0,
