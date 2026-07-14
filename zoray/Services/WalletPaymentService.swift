@@ -32,8 +32,8 @@ final class WalletPaymentService {
         WalletPaymentPackage(amount: "400", price: "$0.99", productId: "sbmsikozsyuqqaer"),
         WalletPaymentPackage(amount: "800", price: "$1.99", productId: "ixgzymtqrarbfxsv"),
         WalletPaymentPackage(amount: "1780", price: "$3.99", productId: "kibtegfnvwlsaxsi"),
-//        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
-        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "dxismgcwewhrtezo"),//dxismgcwewhrtezo
+        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "yyghcucayukndkcb"),
+//        WalletPaymentPackage(amount: "2450", price: "$4.99", productId: "dxismgcwewhrtezo"),//dxismgcwewhrtezo
         WalletPaymentPackage(amount: "5150", price: "$9.99", productId: "ppametlxzpksjplo"),
         WalletPaymentPackage(amount: "10800", price: "$19.99", productId: "zfwdfihxrathvrlh"),
         WalletPaymentPackage(amount: "19800", price: "$39.99", productId: "fmravldlhofgsixb"),
