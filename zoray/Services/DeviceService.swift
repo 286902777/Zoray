@@ -34,7 +34,6 @@ final class DeviceService {
     let appModels: [AppModel] = [
         AppModel(name: "WhatsApp", scheme: "whatsapp"),
         AppModel(name: "Instagram", scheme: "instagram"),
-        AppModel(name: "Facebook", scheme: "fb"),
         AppModel(name: "TikTok", scheme: "tiktok"),
         AppModel(name: "GoogleMaps", scheme: "comgooglemaps"),
         AppModel(name: "Twitter", scheme: "tweetie"),

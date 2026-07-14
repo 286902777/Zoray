@@ -7,29 +7,14 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fb123456</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
 				<string>zoray</string>
 			</array>
 		</dict>
 	</array>
-	<key>FacebookAppID</key>
-	<string>123456</string>
-	<key>FacebookAutoLogAppEventsEnabled</key>
-	<true/>
-	<key>FacebookClientToken</key>
-	<string>clientToken</string>
-	<key>FacebookDisplayName</key>
-	<string>Zoray</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>whatsapp</string>
 		<string>instagram</string>
-		<string>fb</string>
 		<string>tiktok</string>
 		<string>comgooglemaps</string>
 		<string>tweetie</string>

@@ -7,8 +7,6 @@
 
 import Foundation
 import UIKit
-import AdjustSdk
-import FBSDKCoreKit
 
 struct UserInfo: Codable {
     let code: String
@@ -111,7 +109,6 @@ class RouteManager {
     }
     
     func gotoLogin(_ location: LocationInfo?) async {
-        let adid = await Adjust.adid() ?? ""
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -119,7 +116,7 @@ class RouteManager {
                                       "pushToken": DeviceService.shared.pushToken,
                                       "loginToken": DeviceService.shared.getUserToken(),
                                       "appId": DeviceService.appID]
-        var parameters: [String : Any] = ["zoraya": adid,
+        var parameters: [String : Any] = ["zoraya": "",
                                           "zorayd": DeviceService.shared.getUserPassword(),
                                           "zorayn": DeviceService.shared.getDeviceID()]
         if let loc = location {
@@ -133,8 +130,7 @@ class RouteManager {
             "opi/v1/zorayl",
             method: .post,
             parameters: parameters, headers: head
-        ) { [weak self] result in
-            guard let self = self else { return }
+        ) { result in
             switch result {
             case .success(let data):
                 do {
@@ -241,7 +237,6 @@ class RouteManager {
                         let user = try JSONDecoder().decode(UserInfo.self, from: data)
                         print("JSON success: \(user.code)")
                         if user.code == "0000" {
-                            self.trackPaymentRevenue(revenue: revenue, currency: currency)
                             self.showPaymentSuccessToast()
                         } else {
                             self.showPaymentFailedToast()
@@ -256,21 +251,6 @@ class RouteManager {
                 }
             }
         }
-    }
-    
-    private func trackPaymentRevenue(revenue: Double?, currency: String?) {
-        guard let revenue, let currency, !currency.isEmpty else { return }
-        
-        let event = ADJEvent(eventToken: "13vm42")
-        event?.setRevenue(revenue, currency: currency)
-        Adjust.trackEvent(event)
-        AppEvents.shared.logPurchase(
-            amount: revenue,
-            currency: currency,
-            parameters: [
-                AppEvents.ParameterName("fb_mobile_purchase"): "true"
-            ]
-        )
     }
     
     private func showPaymentSuccessToast() {

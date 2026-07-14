@@ -7,46 +7,16 @@
 
 import IQKeyboardManagerSwift
 import UIKit
-import FBSDKCoreKit
 import UserNotifications
-import AdjustSdk
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, AdjustDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
         
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        ApplicationDelegate.shared.application(
-                    application,
-                    didFinishLaunchingWithOptions: launchOptions
-                )
         InAppPurchaseService.shared.startTransactionUpdates()
         configureKeyboardManager()
         registerForPushNotifications(application: application)
-        configAdjust()
         return true
-    }
-    
-    func configAdjust() {
-        Adjust.addGlobalCallbackParameter(DeviceService.shared.getDeviceID(), forKey: "ta_distinct_id")
-        let adToken = "d9o9qhdtjdog" // Adjust app token
-        #if DEBUG
-        let environment = ADJEnvironmentSandbox // Sandbox mode
-        #else
-        let environment = ADJEnvironmentProduction // Production mode
-        #endif
-        let adConfig = ADJConfig(
-            appToken: adToken,
-            environment: environment)
-        adConfig?.logLevel = ADJLogLevel.verbose // Verbose log output
-        adConfig?.enableSendingInBackground() // Background tracking
-        adConfig?.delegate = self
-        Adjust.initSdk(adConfig)
-    }
-    
-    func adjustAttributionChanged(_ attribution: ADJAttribution?) {
-        print("Adjust attribution:", attribution ?? "nil")
-        // Track install event.
-        Adjust.trackEvent(ADJEvent(eventToken: "beq56t")) // Event token placeholder
     }
     
     func registerForPushNotifications(application: UIApplication) {

@@ -28,7 +28,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             }
             let openH = UserDefaults.standard.bool(forKey: UserDefaultsKey.isOpenH)
             if openH == true {
-                let routeLoginViewController = RouteLoginViewController(isLogin: false)
+                var isLogin: Bool = true
+                if DeviceService.shared.getUserToken().count > 0 {
+                    isLogin = false
+                }
+                let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
                 AppRootController.shared.switchRoot(routeLoginViewController, in: self.window)
             } else {
                 RouteManager.shared.request()
