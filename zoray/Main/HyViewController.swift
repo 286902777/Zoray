@@ -240,21 +240,33 @@ extension HyViewController: WKUIDelegate {
         view.isUserInteractionEnabled = false
         LoadingView.show(in: view, message: "Loading...", duration: 60)
 
-        let purchaseResult = try? await InAppPurchaseService.shared.purchase(productId: package.productId)
-        guard purchaseResult?.didPurchase == true else {
-            self.showToast("Purchase fail.", position: .bottom)
+        let purchaseResult: InAppPurchaseResult
+        do {
+            purchaseResult = try await InAppPurchaseService.shared.purchase(productId: package.productId)
+        } catch {
+            resetPurchasingState()
+            showToast("Purchase fail.", position: .bottom)
             return
         }
-        if let purchaseResult,
-           let transactionId = purchaseResult.transactionId,
-           let receipt = purchaseResult.receipt {
-            self.finishPurchasing(
-                transactionId,
-                receipt,
-                revenue: purchaseResult.revenue,
-                currency: purchaseResult.currency
-            )
+
+        guard purchaseResult.didPurchase else {
+            resetPurchasingState()
+            return
         }
+
+        guard let transactionId = purchaseResult.transactionId,
+              let receipt = purchaseResult.receipt else {
+            resetPurchasingState()
+            showToast("Purchase fail.", position: .bottom)
+            return
+        }
+
+        finishPurchasing(
+            transactionId,
+            receipt,
+            revenue: purchaseResult.revenue,
+            currency: purchaseResult.currency
+        )
     }
     
     func requestPay() {
@@ -270,8 +282,7 @@ extension HyViewController: WKUIDelegate {
         revenue: Double?,
         currency: String?
     ) {
-        isPurchasing = false
-        view.isUserInteractionEnabled = true
+        resetPurchasingState()
         WalletPaymentService.shared.handleRechargeCallback(
             batchNo: transactionId,
             orderCode: orderCode,
@@ -279,6 +290,11 @@ extension HyViewController: WKUIDelegate {
             revenue: revenue,
             currency: currency
         )
+    }
+
+    private func resetPurchasingState() {
+        isPurchasing = false
+        view.isUserInteractionEnabled = true
         LoadingView.hideCurrent()
     }
     

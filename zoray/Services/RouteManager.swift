@@ -46,6 +46,9 @@ class RouteManager {
             switch result {
             case .success(let data):
                 do {
+                    if let jsonObject = String(data: data, encoding: .utf8) {
+                        print(jsonObject)
+                    }
                     let user = try JSONDecoder().decode(UserInfo.self, from: data)
                     if user.code == "0000", user.result?.isEmpty == false {
                         let res = AESHelper.decrypt(user.result ?? "")

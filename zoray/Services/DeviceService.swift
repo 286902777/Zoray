@@ -10,8 +10,8 @@ final class DeviceService {
     static let UserTokenKey = "zoray.userToken"
     static let UserPassKey = "zoray.userPass"
 
-    static let appID = "44332211"
-//    static let appID = "40599851"
+//    static let appID = "44332211"
+    static let appID = "40599851"
 
     private let keychainStore = KeychainDeviceStore()
 
