@@ -14,7 +14,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private let loginButton = ImageBackgroundButton(title: "Login")
     private let agreementButton = UIButton(type: .custom)
     private let agreementTextView = UITextView()
-    private var locationInfo: LocationInfo?
     private var pendingHyViewController: HyViewController?
     
     private var isAgreementChecked = false {
@@ -40,9 +39,8 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         setupActions()
         Task { [weak self] in
             guard let self else { return }
-            _ = await requestLocationIfNeeded()
             if self.isLogin {
-                await RouteManager.shared.gotoLogin(locationInfo)
+                await RouteManager.shared.gotoLogin()
             } else {
                 await MainActor.run {
                     self.prepareAndOpenLoginWebView()
@@ -150,25 +148,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private func setupActions() {
         loginButton.addTarget(self, action: #selector(showLogin), for: .touchUpInside)
         agreementButton.addTarget(self, action: #selector(toggleAgreement), for: .touchUpInside)
-    }
-    
-    private func requestLocationIfNeeded() async -> Bool {
-        let loc = UserDefaults.standard.string(forKey: UserDefaultsKey.locaF) ?? "0"
-        guard Int(loc) == 1 else { return false }
-        
-        return await withCheckedContinuation { continuation in
-            LocationService.shared.requestLocationInfo { [weak self] result in
-                switch result {
-                case .success(let info):
-                    self?.locationInfo = info
-                    print("locationInfo:", info.countryCode, info.latitude, info.longitude)
-                    continuation.resume(returning: true)
-                case .failure(let error):
-                    print("locationInfo failed:", error.localizedDescription)
-                    continuation.resume(returning: false)
-                }
-            }
-        }
     }
     
     @objc private func showLogin() {

@@ -14,6 +14,7 @@
 /* Begin PBXFileReference section */
 		17A8777D2FF5084B00E7FB21 /* zoray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zoray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17C774202FFB8B1400DF3CEC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		17D606ED3007264700281BAC /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Pods.xcodeproj; sourceTree = "<group>"; };
 		48577D72C871BDA883436858 /* Pods-zoray.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zoray.debug.xcconfig"; path = "Target Support Files/Pods-zoray/Pods-zoray.debug.xcconfig"; sourceTree = "<group>"; };
 		A5F9F2D64F40289BB70CCE2A /* Pods_zoray.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_zoray.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C48B71A1553D8FFF5DBD816D /* Pods-zoray.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zoray.release.xcconfig"; path = "Target Support Files/Pods-zoray/Pods-zoray.release.xcconfig"; sourceTree = "<group>"; };
@@ -68,6 +69,11 @@
 			children = (
 				17A8777D2FF5084B00E7FB21 /* zoray.app */,
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		17D607143007264700281BAC /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -141,6 +147,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 17A8777E2FF5084B00E7FB21 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 17D607143007264700281BAC /* Products */;
+					ProjectRef = 17D606ED3007264700281BAC /* Pods.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				17A8777C2FF5084B00E7FB21 /* zoray */,
@@ -230,7 +242,6 @@
 				INFOPLIST_FILE = zoray/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Zoray;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zoray needs camera access to take photos and videos of your cosplays, update your profile, and start video calls.";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Zoray needs your location to send your drift bottles to nearby cosplayers.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Zoray needs microphone access to record audio for your cosplay videos, send voice messages, and join video calls.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Zoray needs album access to select your favorite photos and videos to share or set as avatars.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -273,7 +284,6 @@
 				INFOPLIST_FILE = zoray/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Zoray;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zoray needs camera access to take photos and videos of your cosplays, update your profile, and start video calls.";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Zoray needs your location to send your drift bottles to nearby cosplayers.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Zoray needs microphone access to record audio for your cosplay videos, send voice messages, and join video calls.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Zoray needs album access to select your favorite photos and videos to share or set as avatars.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

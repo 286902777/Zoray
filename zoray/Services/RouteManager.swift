@@ -17,7 +17,6 @@ struct UserInfo: Codable {
 enum UserDefaultsKey {
     static let isOpenH = "zoray.isOpenH"
     static let pushToken = "zoray.pushToken"
-    static let locaF = "zoray.locationFlag"
     static let hostUrl = "HostUrl"
 }
 
@@ -59,7 +58,6 @@ class RouteManager {
                             if let dict = try JSONSerialization.jsonObject(with: resData, options: []) as? [String: Any] {
                                 UserDefaults.standard.setValue(true, forKey: UserDefaultsKey.isOpenH)
                                 self.saveStringValue(dict["openValue"], forKey: UserDefaultsKey.hostUrl)
-                                self.saveStringValue(dict["locationFlag"], forKey: UserDefaultsKey.locaF)
                                 DispatchQueue.main.async {
                                     if dict["loginFlag"] as? Int == 1 {
                                         self.openLogin(false, dict)
@@ -107,7 +105,7 @@ class RouteManager {
         return windows.first { $0.isKeyWindow } ?? windows.first
     }
     
-    func gotoLogin(_ location: LocationInfo?) async {
+    func gotoLogin() async {
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -118,13 +116,7 @@ class RouteManager {
         var parameters: [String : Any] = ["zoraya": "",
                                           "zorayd": DeviceService.shared.getUserPassword(),
                                           "zorayn": DeviceService.shared.getDeviceID()]
-        if let loc = location {
-            parameters["zorayv"] = [
-                "countryCode": loc.countryCode,
-                "latitude": loc.latitude,
-                "longitude": loc.longitude
-              ]
-        }
+
         NetworkService.shared.requestData(
             "opi/v1/zorayl",
             method: .post,
