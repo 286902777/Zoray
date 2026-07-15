@@ -16,23 +16,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="logo_icon" translatesAutoresizingMaskIntoConstraints="NO" id="gR3-bz-mE2">
-                                <rect key="frame" x="142.66666666666666" y="240" width="108" height="108"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="s_b" translatesAutoresizingMaskIntoConstraints="NO" id="W11-fg-l0g">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Zoray" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="A7F-OT-xV7">
-                                <rect key="frame" x="165.66666666666666" y="364" width="61.666666666666657" height="28"/>
-                                <fontDescription key="fontDescription" type="system" weight="medium" pointSize="24"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
-                        <color key="backgroundColor" red="0.070588235294117646" green="0.10196078431372549" blue="0.23921568627450979" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="A7F-OT-xV7" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Byc-Mg-p4p"/>
-                            <constraint firstItem="gR3-bz-mE2" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" constant="240" id="W0h-AD-WgU"/>
-                            <constraint firstItem="gR3-bz-mE2" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="hLZ-p6-UYT"/>
-                            <constraint firstItem="A7F-OT-xV7" firstAttribute="top" secondItem="gR3-bz-mE2" secondAttribute="bottom" constant="16" id="k3R-GZ-Bkh"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="W11-fg-l0g" secondAttribute="trailing" id="X1u-Ih-vXt"/>
+                            <constraint firstAttribute="bottom" secondItem="W11-fg-l0g" secondAttribute="bottom" id="bi7-ES-mqN"/>
+                            <constraint firstItem="W11-fg-l0g" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="kRP-xr-JNe"/>
+                            <constraint firstItem="W11-fg-l0g" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="tju-GP-eEn"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -42,6 +36,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="logo_icon" width="108" height="108"/>
+        <image name="s_b" width="375" height="812"/>
     </resources>
 </document>

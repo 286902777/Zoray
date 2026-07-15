@@ -12,12 +12,11 @@ import ScreenShield
 
 class HyViewController: UIViewController {
     var onClose: (() -> Void)?
-    var onOpenBrowser: ((String) -> Void)?
     var onInitialLoadFinished: ((Bool) -> Void)?
     private var isPurchasing = false
     private var batchNo: String = ""
     private var orderCode: String = ""
-
+    
     private enum UserDefaultsKey {
         static let hostUrl = "HostUrl"
     }
@@ -27,8 +26,16 @@ class HyViewController: UIViewController {
     private var hasReportedInitialLoad = false
     private var hasProtectedScreen = false
     
+    private lazy var edgeBackGestureRecognizer: UIScreenEdgePanGestureRecognizer = {
+        let recognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgeBackGesture))
+        recognizer.edges = .left
+        recognizer.delegate = self
+        return recognizer
+    }()
+    
     private lazy var backgroundImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "ssssw"))
+        let image = UIImage(named: "rawVibeExchange") ?? UIImage(named: "s_b")
+        let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         return imageView
@@ -80,6 +87,7 @@ class HyViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         protectScreenIfNeeded()
+        PushNotificationService.shared.requestAuthorizationIfNeeded()
     }
     
     // MARK: - Public Methods
@@ -103,15 +111,34 @@ class HyViewController: UIViewController {
         }
         
         webView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.leading.trailing.equalToSuperview()
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
+        
+        view.addGestureRecognizer(edgeBackGestureRecognizer)
     }
     
     private func protectScreenIfNeeded() {
         guard hasProtectedScreen == false else { return }
         hasProtectedScreen = true
-        ScreenShield.shared.protect(view: view)
+        ScreenShield.shared.protect(view: webView)
         ScreenShield.shared.protectFromScreenRecording()
+    }
+    
+    @objc private func handleEdgeBackGesture(_ gestureRecognizer: UIScreenEdgePanGestureRecognizer) {
+        guard gestureRecognizer.state == .recognized else { return }
+        goBack()
+    }
+    
+    private func goBack() {
+        if webView.canGoBack {
+            webView.goBack()
+        } else if let navigationController {
+            navigationController.popViewController(animated: true)
+        } else {
+            dismiss(animated: true)
+        }
     }
     
     private func loadH5() {
@@ -157,8 +184,12 @@ extension HyViewController: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        guard let loadingStartTime = loadingStartTime else { return }
-        let loadingTime = Int(Date().timeIntervalSince(loadingStartTime) * 1000)
+        let loadingTime: Int
+        if let loadingStartTime {
+            loadingTime = Int(Date().timeIntervalSince(loadingStartTime) * 1000)
+        } else {
+            loadingTime = 0
+        }
         
         print("loadTime: \(loadingTime) ms")
         reportInitialLoadIfNeeded(success: true)
@@ -195,6 +226,18 @@ extension HyViewController: WKNavigationDelegate {
         }
         
         decisionHandler(.allow)
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+
+extension HyViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer === edgeBackGestureRecognizer {
+            return webView.canGoBack || navigationController != nil || presentingViewController != nil
+        }
+        
+        return true
     }
 }
 
@@ -327,8 +370,22 @@ extension HyViewController: WKScriptMessageHandler {
         
         if message.name == "openBrowser",
            let body = message.body as? [String: Any],
-           let url = body["url"] as? String {
-            onOpenBrowser?(url)
+           let urlStr = body["url"] as? String {
+            if let url = URL(string: urlStr) {
+                
+                UIApplication.shared.open(url, options: [:]) { success in
+                    let state = success ? "success" : "failed"
+                    let js = """
+                                                window.dispatchEvent(new CustomEvent('nativeOpenState', {
+                                                    detail: { state: '\(state)', url: '\(url.absoluteString)' }
+                                                }));
+                                                """
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.webView.evaluateJavaScript(js, completionHandler: nil)
+                    }
+                }
+            }
         }
     }
 }

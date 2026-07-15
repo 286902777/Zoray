@@ -4,6 +4,11 @@ final class AppRootController {
     static let shared = AppRootController()
 
     private init() {}
+    
+    func showSplash(in window: UIWindow?) {
+        let splashViewController = RouteSplashViewController()
+        switchRoot(splashViewController, in: window)
+    }
 
     func showLogin(in window: UIWindow?) {
         let startViewController = StartViewController()

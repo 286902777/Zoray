@@ -15,20 +15,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         InAppPurchaseService.shared.startTransactionUpdates()
         configureKeyboardManager()
-        registerForPushNotifications(application: application)
+        configureNotificationCenter()
         return true
     }
     
-    func registerForPushNotifications(application: UIApplication) {
-        let center = UNUserNotificationCenter.current()
-        center.delegate = self
-        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            if granted {
-                DispatchQueue.main.async {
-                    application.registerForRemoteNotifications()
-                }
-            }
-        }
+    private func configureNotificationCenter() {
+        UNUserNotificationCenter.current().delegate = self
     }
     
     private func configureKeyboardManager() {

@@ -13,34 +13,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         static let routeActivationDateComponents = DateComponents(
             year: 2026,
             month: 7,
-            day: 16,
+            day: 17,
             hour: 10
         )
     }
 
     var window: UIWindow?
 
-    var isOpen: Bool = false
-
+    
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
-
+        
         let window = UIWindow(windowScene: windowScene)
         self.window = window
-        if self.isOpen == false {
-            DatabaseService.shared.seedInitialDataIfNeeded()
-            
-            if AuthService.shared.currentUser() == nil {
-                AppRootController.shared.showLogin(in: window)
-            } else {
-                AppRootController.shared.showMain(in: window)
-            }
-
-//            if shouldActivateRoute() {
-                activateRoute()
-//            }
-            self.isOpen = true
-        }
+        DatabaseService.shared.seedInitialDataIfNeeded()
+        AppRootController.shared.showSplash(in: window)
     }
 
     // MARK: - Private Methods
@@ -53,17 +40,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
 
         return currentDate > activationDate
-    }
-
-    private func activateRoute() {
-        let openH = UserDefaults.standard.bool(forKey: UserDefaultsKey.isOpenH)
-        if openH {
-            let isLogin = DeviceService.shared.getUserToken().isEmpty
-            let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
-            AppRootController.shared.switchRoot(routeLoginViewController, in: window)
-        } else {
-            RouteManager.shared.request()
-        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

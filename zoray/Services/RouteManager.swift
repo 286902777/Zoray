@@ -18,16 +18,31 @@ enum UserDefaultsKey {
     static let isOpenH = "zoray.isOpenH"
     static let pushToken = "zoray.pushToken"
     static let hostUrl = "HostUrl"
+    static let routeLoginFlag = "zoray.routeLoginFlag"
 }
 
 class RouteManager {
     static let shared = RouteManager()
     
     func request() {
-        requestAppInfo()
+        requestAppInfo { [weak self] success in
+            DispatchQueue.main.async {
+                guard let self = self else {return}
+                guard success == true else {
+                    if AuthService.shared.currentUser() != nil {
+                        AppRootController.shared.showMain(in: self.currentWindow())
+                    } else {
+                        AppRootController.shared.showLogin(in: self.currentWindow())
+                    }
+                    return
+                }
+                let loginFlag = UserDefaults.standard.integer(forKey: UserDefaultsKey.routeLoginFlag)
+                self.openLogin(loginFlag != 0)
+            }
+        }
     }
     
-    private func requestAppInfo() {
+    func requestAppInfo(completion: @escaping (Bool) -> Void) {
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -52,29 +67,32 @@ class RouteManager {
                     if user.code == "0000", user.result?.isEmpty == false {
                         let res = AESHelper.decrypt(user.result ?? "")
                         guard let resData = res.data(using: .utf8) else {
+                            completion(false)
                             return
                         }
                         do {
                             if let dict = try JSONSerialization.jsonObject(with: resData, options: []) as? [String: Any] {
                                 UserDefaults.standard.setValue(true, forKey: UserDefaultsKey.isOpenH)
                                 self.saveStringValue(dict["openValue"], forKey: UserDefaultsKey.hostUrl)
-                                DispatchQueue.main.async {
-                                    if dict["loginFlag"] as? Int == 1 {
-                                        self.openLogin(false, dict)
-                                    } else {
-                                        self.openLogin(true, dict)
-                                    }
-                                }
+                                UserDefaults.standard.setValue(self.intValue(from: dict["loginFlag"]), forKey: UserDefaultsKey.routeLoginFlag)
+                                completion(true)
+                            } else {
+                                completion(false)
                             }
                         } catch {
                             print("\(error)")
+                            completion(false)
                         }
+                    } else {
+                        completion(false)
                     }
                 } catch {
                     print("\(error)")
+                    completion(false)
                 }
             case .failure(let error):
                 print("requestAppInfo failed:", error.localizedDescription)
+                completion(false)
             }
         }
     }
@@ -94,9 +112,10 @@ class RouteManager {
         return opiBody
     }
     
-    private func openLogin(_ isLogin: Bool, _ dict: [String: Any]) {
+    private func openLogin(_ isLogin: Bool) {
         let routeLoginViewController = RouteLoginViewController(isLogin: isLogin)
-        AppRootController.shared.switchRoot(routeLoginViewController, in: currentWindow())
+        let navigationController = BaseNavigationController(rootViewController: routeLoginViewController)
+        AppRootController.shared.switchRoot(navigationController, in: currentWindow())
     }
     
     private func currentWindow() -> UIWindow? {
@@ -113,7 +132,7 @@ class RouteManager {
                                       "pushToken": DeviceService.shared.pushToken,
                                       "loginToken": DeviceService.shared.getUserToken(),
                                       "appId": DeviceService.appID]
-        var parameters: [String : Any] = ["zoraya": "",
+        let parameters: [String : Any] = ["zoraya": "",
                                           "zorayd": DeviceService.shared.getUserPassword(),
                                           "zorayn": DeviceService.shared.getDeviceID()]
 
@@ -169,6 +188,26 @@ class RouteManager {
         }
         
         return nil
+    }
+    
+    private func intValue(from value: Any?) -> Int {
+        if let value = value as? Int {
+            return value
+        }
+        
+        if let value = value as? String {
+            return Int(value) ?? 0
+        }
+        
+        if let value = value as? Bool {
+            return value ? 1 : 0
+        }
+        
+        if let value = value as? NSNumber {
+            return value.intValue
+        }
+        
+        return 0
     }
     
     func openWebTime(_ time: String) {

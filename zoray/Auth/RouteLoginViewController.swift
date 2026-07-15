@@ -5,6 +5,10 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private enum AgreementStorage {
         static let agreementCheckedKey = "zoray.agreementChecked"
     }
+
+    private enum Timing {
+        static let rootTransitionDelay: TimeInterval = 0.3
+    }
     
     let isLogin: Bool
     
@@ -15,6 +19,7 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private let agreementButton = UIButton(type: .custom)
     private let agreementTextView = UITextView()
     private var pendingHyViewController: HyViewController?
+    private var hasAttemptedAutomaticWebViewOpen = false
     
     private var isAgreementChecked = false {
         didSet {
@@ -37,16 +42,15 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         super.viewDidLoad()
         setupUI()
         setupActions()
-        Task { [weak self] in
-            guard let self else { return }
-            if self.isLogin {
+
+        if isLogin {
+            Task {
                 await RouteManager.shared.gotoLogin()
-            } else {
-                await MainActor.run {
-                    self.prepareAndOpenLoginWebView()
-                }
             }
+        } else {
+            self.prepareAndOpenLoginWebView()
         }
+        
     }
     
     private func setupUI() {
@@ -57,7 +61,11 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         setupBrand()
         setupButton()
         setupAgreement()
-        isAgreementChecked = UserDefaults.standard.bool(forKey: AgreementStorage.agreementCheckedKey)
+        if UserDefaults.standard.object(forKey: AgreementStorage.agreementCheckedKey) == nil {
+            isAgreementChecked = true
+        } else {
+            isAgreementChecked = UserDefaults.standard.bool(forKey: AgreementStorage.agreementCheckedKey)
+        }
     }
     
     private func setupBackground() {
@@ -92,7 +100,7 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         view.addSubview(loginButton)
         loginButton.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(54)
-            make.trailing.equalToSuperview().offset(-54)
+            make.trailing.equalToSuperview().offset(-54).priority(.high)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-104)
             make.height.equalTo(48)
         }
@@ -123,7 +131,7 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         agreementTextView.snp.makeConstraints { make in
             make.leading.equalTo(agreementButton.snp.trailing).offset(6)
             make.centerY.equalTo(agreementButton).offset(3)
-            make.trailing.lessThanOrEqualToSuperview().offset(-28)
+            make.trailing.lessThanOrEqualToSuperview().offset(-28).priority(.high)
             make.height.equalTo(22)
         }
     }
@@ -160,33 +168,42 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     }
     
     private func prepareAndOpenLoginWebView() {
+        guard pendingHyViewController == nil else {
+            return
+        }
+
         loginButton.isEnabled = false
         LoadingView.show(in: view, message: "Loading...", duration: 60)
-        
+
         guard let h5Url = makeLoginH5URL() else {
             finishLoginLoading()
+            showToast("Load failed")
             return
         }
         
         let viewController = HyViewController(h5Url: h5Url)
         pendingHyViewController = viewController
-        viewController.onInitialLoadFinished = { [weak self] success in
+        viewController.onInitialLoadFinished = { [weak self, weak viewController] success in
             DispatchQueue.main.async { [weak self] in
-                self?.handleInitialWebLoadFinished(success: success)
+                guard let viewController else { return }
+                self?.handleInitialWebLoadFinished(viewController, success: success)
             }
         }
         viewController.loadViewIfNeeded()
     }
     
-    private func handleInitialWebLoadFinished(success: Bool) {
-        guard let viewController = pendingHyViewController else { return }
-        finishLoginLoading()
-        if success {
-            openLoadedWebView(viewController)
-        } else {
-            showToast("Load failed")
-        }
+    private func handleInitialWebLoadFinished(_ viewController: HyViewController, success: Bool) {
+        guard pendingHyViewController === viewController else { return }
+
         pendingHyViewController = nil
+        finishLoginLoading()
+        guard success else {
+            showToast("Load failed")
+            return
+        }
+
+        viewController.modalPresentationStyle = .overFullScreen
+        present(viewController, animated: true)
     }
     
     private func makeLoginH5URL() -> String? {
@@ -213,15 +230,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
     private func finishLoginLoading() {
         loginButton.isEnabled = true
         LoadingView.hideCurrent()
-    }
-    
-    private func openLoadedWebView(_ viewController: HyViewController) {
-        if let navigationController = navigationController {
-            navigationController.pushViewController(viewController, animated: true)
-        } else {
-            viewController.modalPresentationStyle = .overFullScreen
-            present(viewController, animated: true)
-        }
     }
     
     @objc private func toggleAgreement() {
