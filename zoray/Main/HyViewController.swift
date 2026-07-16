@@ -121,7 +121,6 @@ class HyViewController: UIViewController {
     private func protectScreenIfNeeded() {
         guard hasProtectedScreen == false else { return }
         hasProtectedScreen = true
-        ScreenShield.shared.protect(view: webView)
         ScreenShield.shared.protectFromScreenRecording()
     }
     

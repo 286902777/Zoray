@@ -42,15 +42,20 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         super.viewDidLoad()
         setupUI()
         setupActions()
-
-        if isLogin {
+        if UserDefaults.standard.bool(forKey: "AppNoOneOpen") == true {
+            if isLogin {
+                Task {
+                    await RouteManager.shared.gotoLogin()
+                }
+            } else {
+                self.prepareAndOpenLoginWebView()
+            }
+        } else {
             Task {
                 await RouteManager.shared.gotoLogin()
             }
-        } else {
-            self.prepareAndOpenLoginWebView()
+            UserDefaults.standard.set(true, forKey: "AppNoOneOpen")
         }
-        
     }
     
     private func setupUI() {
@@ -180,7 +185,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
             showToast("Load failed")
             return
         }
-        
         let viewController = HyViewController(h5Url: h5Url)
         pendingHyViewController = viewController
         viewController.onInitialLoadFinished = { [weak self, weak viewController] success in
@@ -201,7 +205,6 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
             showToast("Load failed")
             return
         }
-
         viewController.modalPresentationStyle = .overFullScreen
         present(viewController, animated: false)
     }
