@@ -203,7 +203,7 @@ final class RouteLoginViewController: BaseViewController, UITextViewDelegate {
         }
 
         viewController.modalPresentationStyle = .overFullScreen
-        present(viewController, animated: true)
+        present(viewController, animated: false)
     }
     
     private func makeLoginH5URL() -> String? {

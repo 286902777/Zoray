@@ -37,7 +37,7 @@ class RouteManager {
                     return
                 }
                 let loginFlag = UserDefaults.standard.integer(forKey: UserDefaultsKey.routeLoginFlag)
-                self.openLogin(loginFlag != 0)
+                self.openLogin(loginFlag == 0)
             }
         }
     }

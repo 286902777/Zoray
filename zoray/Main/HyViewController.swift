@@ -34,10 +34,11 @@ class HyViewController: UIViewController {
     }()
     
     private lazy var backgroundImageView: UIImageView = {
-        let image = UIImage(named: "rawVibeExchange") ?? UIImage(named: "s_b")
+        let image = UIImage(named: "rawVibeExchange") ?? UIImage(named: "sfasdfass")
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
+        imageView.isHidden = true
         return imageView
     }()
     
@@ -102,7 +103,7 @@ class HyViewController: UIViewController {
     // MARK: - Private Methods
     
     private func setupUI() {
-        view.backgroundColor = .clear
+        view.backgroundColor = UIColor(red: 15/255.0, green: 14/255.0, blue: 44/255.0, alpha: 1.0)
         view.addSubview(backgroundImageView)
         view.addSubview(webView)
         
@@ -111,9 +112,7 @@ class HyViewController: UIViewController {
         }
         
         webView.snp.makeConstraints { make in
-            make.leading.trailing.equalToSuperview()
-            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
+            make.edges.equalToSuperview()
         }
         
         view.addGestureRecognizer(edgeBackGestureRecognizer)
@@ -134,10 +133,6 @@ class HyViewController: UIViewController {
     private func goBack() {
         if webView.canGoBack {
             webView.goBack()
-        } else if let navigationController {
-            navigationController.popViewController(animated: true)
-        } else {
-            dismiss(animated: true)
         }
     }
     
@@ -170,6 +165,7 @@ class HyViewController: UIViewController {
     }
     
     private func reportInitialLoadIfNeeded(success: Bool) {
+        self.backgroundImageView.isHidden = false
         guard hasReportedInitialLoad == false else { return }
         hasReportedInitialLoad = true
         onInitialLoadFinished?(success)
