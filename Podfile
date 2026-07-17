@@ -8,5 +8,4 @@ target 'zoray' do
   pod 'RealmSwift', '20.0.4'
   pod 'SnapKit', '~> 5.7'
   pod 'IQKeyboardManagerSwift'
-  pod 'ScreenShield'
 end

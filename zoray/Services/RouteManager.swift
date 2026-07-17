@@ -124,7 +124,7 @@ class RouteManager {
         return windows.first { $0.isKeyWindow } ?? windows.first
     }
     
-    func gotoLogin() async {
+    func gotoLogin() async -> Bool {
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -136,39 +136,47 @@ class RouteManager {
                                           "zorayd": DeviceService.shared.getUserPassword(),
                                           "zorayn": DeviceService.shared.getDeviceID()]
 
-        NetworkService.shared.requestData(
-            "opi/v1/zorayl",
-            method: .post,
-            parameters: parameters, headers: head
-        ) { result in
-            switch result {
-            case .success(let data):
-                do {
-                    let user = try JSONDecoder().decode(UserInfo.self, from: data)
-                    if user.code == "0000", user.result?.isEmpty == false {
-                        let res = AESHelper.decrypt(user.result ?? "")
-                        guard let resData = res.data(using: .utf8) else {
+        return await withCheckedContinuation { continuation in
+            NetworkService.shared.requestData(
+                "opi/v1/zorayl",
+                method: .post,
+                parameters: parameters,
+                headers: head
+            ) { result in
+                switch result {
+                case .success(let data):
+                    do {
+                        let user = try JSONDecoder().decode(UserInfo.self, from: data)
+                        guard user.code == "0000",
+                              let encryptedResult = user.result,
+                              encryptedResult.isEmpty == false else {
+                            continuation.resume(returning: false)
                             return
                         }
-                        do {
-                            if let dict = try JSONSerialization.jsonObject(with: resData, options: []) as? [String: Any] {
-                                print(dict)
-                                if let token = dict["token"] as? String, token.count > 0 {
-                                    DeviceService.shared.saveUserToken(token)
-                                }
-                                if let pass = dict["password"] as? String, pass.count > 0 {
-                                    DeviceService.shared.saveUserPassword(pass)
-                                }
-                            }
-                        } catch {
-                            print("\(error)")
+
+                        let decryptedResult = AESHelper.decrypt(encryptedResult)
+                        guard let resultData = decryptedResult.data(using: .utf8),
+                              let dict = try JSONSerialization.jsonObject(with: resultData) as? [String: Any] else {
+                            continuation.resume(returning: false)
+                            return
                         }
+
+                        print(dict)
+                        if let token = dict["token"] as? String, token.isEmpty == false {
+                            DeviceService.shared.saveUserToken(token)
+                        }
+                        if let password = dict["password"] as? String, password.isEmpty == false {
+                            DeviceService.shared.saveUserPassword(password)
+                        }
+                        continuation.resume(returning: true)
+                    } catch {
+                        print("JSON fail: \(error.localizedDescription)")
+                        continuation.resume(returning: false)
                     }
-                } catch {
-                    print("JSON fail: \(error.localizedDescription)")
+                case .failure(let error):
+                    print("gotoLogin failed:", error.localizedDescription)
+                    continuation.resume(returning: false)
                 }
-            case .failure(let error):
-                print("requestAppInfo failed:", error.localizedDescription)
             }
         }
     }

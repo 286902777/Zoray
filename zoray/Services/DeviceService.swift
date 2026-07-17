@@ -75,6 +75,11 @@ final class DeviceService {
             return ""
         }
     }
+
+    func clearUserCredentials() {
+        _ = keychainStore.deleteString(key: DeviceService.UserTokenKey)
+        _ = keychainStore.deleteString(key: DeviceService.UserPassKey)
+    }
     
     func getTimeZone() -> String {
         return TimeZone.current.identifier
@@ -177,6 +182,11 @@ private final class KeychainDeviceStore {
         var addQuery = query
         addQuery[kSecValueData as String] = data
         return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
+    }
+
+    func deleteString(key: String) -> Bool {
+        let status = SecItemDelete(baseQuery(key: key) as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
     }
 
     private func baseQuery(key: String) -> [String: Any] {

@@ -5,6 +5,8 @@
 //  Created by myfy on 2026/7/1.
 //
 
+import CoreTelephony
+import Network
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -19,18 +21,27 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     var window: UIWindow?
+    private let cellularData = CTCellularData()
+    private let networkMonitor = NWPathMonitor()
+    private let networkMonitorQueue = DispatchQueue(label: "app.zoray.network-monitor")
+    private var isWaitingForNetworkPermission = false
+    private var didRetryRouteAfterNetworkAvailable = false
+    private var isNetworkAvailable = false
+    private var hasObservedUnavailableNetwork = false
+    private var shouldRetryWhenNetworkAvailable = false
 
-    
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
-        
+
+        observeNetworkPermission()
+        observeNetworkStatus()
         let window = UIWindow(windowScene: windowScene)
         self.window = window
         DatabaseService.shared.seedInitialDataIfNeeded()
         AppRootController.shared.showSplash(in: window)
     }
 
-    // MARK: - Private Methods
+    // MARK: - UISceneDelegate
 
     private func shouldActivateRoute(at currentDate: Date = Date()) -> Bool {
         guard let activationDate = Calendar.current.date(
@@ -50,13 +61,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+        retryRouteIfNetworkPermissionGranted()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
+        guard didRetryRouteAfterNetworkAvailable == false,
+              cellularData.restrictedState == .restrictedStateUnknown else {
+            return
+        }
+        isWaitingForNetworkPermission = true
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
@@ -70,5 +83,59 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // to restore the scene back to its current state.
     }
 
+    // MARK: - Private Methods
 
+    private func observeNetworkPermission() {
+        cellularData.cellularDataRestrictionDidUpdateNotifier = { [weak self] state in
+            guard state == .notRestricted else { return }
+            DispatchQueue.main.async {
+                self?.retryRouteIfNetworkPermissionGranted()
+            }
+        }
+    }
+
+    private func observeNetworkStatus() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isNetworkAvailable = path.status == .satisfied
+                if self.isNetworkAvailable == false {
+                    self.hasObservedUnavailableNetwork = true
+                    return
+                }
+
+                if self.hasObservedUnavailableNetwork {
+                    self.shouldRetryWhenNetworkAvailable = true
+                }
+                self.retryRouteWhenNetworkAvailable()
+            }
+        }
+        networkMonitor.start(queue: networkMonitorQueue)
+    }
+
+    private func retryRouteIfNetworkPermissionGranted() {
+        guard isWaitingForNetworkPermission,
+              didRetryRouteAfterNetworkAvailable == false,
+              cellularData.restrictedState == .notRestricted else {
+            return
+        }
+
+        isWaitingForNetworkPermission = false
+        shouldRetryWhenNetworkAvailable = true
+        retryRouteWhenNetworkAvailable()
+    }
+
+    private func retryRouteWhenNetworkAvailable() {
+        guard shouldRetryWhenNetworkAvailable,
+              isNetworkAvailable,
+              didRetryRouteAfterNetworkAvailable == false else {
+            return
+        }
+
+        shouldRetryWhenNetworkAvailable = false
+        didRetryRouteAfterNetworkAvailable = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            RouteManager.shared.request()
+        }
+    }
 }

@@ -44,13 +44,11 @@ PODS:
   - Realm/Headers (20.0.4)
   - RealmSwift (20.0.4):
     - Realm (= 20.0.4)
-  - ScreenShield (1.2.2)
   - SnapKit (5.7.1)
 
 DEPENDENCIES:
   - IQKeyboardManagerSwift
   - RealmSwift (= 20.0.4)
-  - ScreenShield
   - SnapKit (~> 5.7)
 
 SPEC REPOS:
@@ -65,7 +63,6 @@ SPEC REPOS:
     - IQTextView
     - Realm
     - RealmSwift
-    - ScreenShield
     - SnapKit
 
 SPEC CHECKSUMS:
@@ -79,9 +76,8 @@ SPEC CHECKSUMS:
   IQTextView: ae13b4922f22e6f027f62c557d9f4f236b19d5c7
   Realm: 1fca83c42ac1d5c7767974882c8de5a7abca4d89
   RealmSwift: 84f36320f6133dea78d05c55bb46bba4387d6828
-  ScreenShield: 7e71aed773345e20badd84c68b6ae2909bd5d46f
   SnapKit: d612e99e678a2d3b95bf60b0705ed0a35c03484a
 
-PODFILE CHECKSUM: d96b98f12451c75b5b26e4a9e02a814033a54ecc
+PODFILE CHECKSUM: 87d77f3259b6773873a65a9a61d4a36c69b933d6
 
 COCOAPODS: 1.16.2

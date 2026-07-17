@@ -8,7 +8,6 @@
 import UIKit
 import WebKit
 import SnapKit
-import ScreenShield
 
 class HyViewController: UIViewController {
     var onClose: (() -> Void)?
@@ -34,7 +33,7 @@ class HyViewController: UIViewController {
     }()
     
     private lazy var backgroundImageView: UIImageView = {
-        let image = UIImage(named: "rawVibeExchange") ?? UIImage(named: "sfasdfass")
+        let image = UIImage(named: "sfasdfass")
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
@@ -121,6 +120,7 @@ class HyViewController: UIViewController {
     private func protectScreenIfNeeded() {
         guard hasProtectedScreen == false else { return }
         hasProtectedScreen = true
+        ScreenShield.shared.protect(view: self.view)
         ScreenShield.shared.protectFromScreenRecording()
     }
     
@@ -353,12 +353,17 @@ extension HyViewController: WKScriptMessageHandler {
         }
         
         if message.name == "Close" {
-            if let onClose = onClose {
-                onClose()
-            } else if let navigationController = navigationController {
-                navigationController.popViewController(animated: true)
-            } else {
-                dismiss(animated: true)
+            ScreenShield.shared.removeProtection(from: view)
+            hasProtectedScreen = false
+            DeviceService.shared.clearUserCredentials()
+            UserDefaults.standard.set(false, forKey: "AppNoOneOpen")
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if let navigationController = self.navigationController {
+                    navigationController.popViewController(animated: true)
+                } else {
+                    self.dismiss(animated: true)
+                }
             }
             return
         }
