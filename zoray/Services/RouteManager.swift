@@ -23,17 +23,20 @@ enum UserDefaultsKey {
 
 class RouteManager {
     static let shared = RouteManager()
+
+    private var appInfoTask: URLSessionDataTask?
+    private var appInfoRequestID: UUID?
     
     func request() {
         requestAppInfo { [weak self] success in
             DispatchQueue.main.async {
                 guard let self = self else {return}
                 guard success == true else {
-                    if AuthService.shared.currentUser() != nil {
-                        AppRootController.shared.showMain(in: self.currentWindow())
-                    } else {
-                        AppRootController.shared.showLogin(in: self.currentWindow())
-                    }
+                        if AuthService.shared.currentUser() != nil {
+                            AppRootController.shared.showMain(in: self.currentWindow())
+                        } else {
+                            AppRootController.shared.showLogin(in: self.currentWindow())
+                        }
                     return
                 }
                 let loginFlag = UserDefaults.standard.integer(forKey: UserDefaultsKey.routeLoginFlag)
@@ -43,6 +46,11 @@ class RouteManager {
     }
     
     func requestAppInfo(completion: @escaping (Bool) -> Void) {
+        appInfoTask?.cancel()
+
+        let requestID = UUID()
+        appInfoRequestID = requestID
+
         let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.1.0"
         let head: [String: String] = ["Content-Type": "application/json",
                                       "appVersion": appVersion,
@@ -51,12 +59,19 @@ class RouteManager {
                                       "loginToken": DeviceService.shared.getUserToken(),
                                       "appId": DeviceService.appID]
         let parameters = makeAppInfoParameters()
-        NetworkService.shared.requestData(
+        appInfoTask = NetworkService.shared.requestData(
             "opi/v1/zorayo",
             method: .post,
             parameters: parameters, headers: head
         ) {[weak self] result in
-            guard let self = self else { return }
+            guard let self = self,
+                  self.appInfoRequestID == requestID else {
+                return
+            }
+
+            self.appInfoTask = nil
+            self.appInfoRequestID = nil
+
             switch result {
             case .success(let data):
                 do {
