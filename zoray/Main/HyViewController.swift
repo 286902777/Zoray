@@ -20,10 +20,10 @@ class HyViewController: UIViewController {
         static let hostUrl = "HostUrl"
     }
     
+    private var hasProtectedScreen = false
     private var h5Url: String?
     private var loadingStartTime: Date?
     private var hasReportedInitialLoad = false
-    private var hasProtectedScreen = false
     
     private lazy var edgeBackGestureRecognizer: UIScreenEdgePanGestureRecognizer = {
         let recognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleEdgeBackGesture))
