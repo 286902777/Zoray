@@ -188,6 +188,7 @@ extension HyViewController: WKNavigationDelegate {
         
         print("loadTime: \(loadingTime) ms")
         reportInitialLoadIfNeeded(success: true)
+        UserDefaults.standard.set(true, forKey: "AppNoOneOpen")
         RouteManager.shared.openWebTime("\(loadingTime)")
     }
     
