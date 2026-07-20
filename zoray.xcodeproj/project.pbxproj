@@ -15,6 +15,7 @@
 		17A8777D2FF5084B00E7FB21 /* zoray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zoray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17C774202FFB8B1400DF3CEC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		17D606ED3007264700281BAC /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Pods.xcodeproj; sourceTree = "<group>"; };
+		17D609FC300A439900281BAC /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Pods.xcodeproj; sourceTree = "<group>"; };
 		48577D72C871BDA883436858 /* Pods-zoray.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zoray.debug.xcconfig"; path = "Target Support Files/Pods-zoray/Pods-zoray.debug.xcconfig"; sourceTree = "<group>"; };
 		A5F9F2D64F40289BB70CCE2A /* Pods_zoray.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_zoray.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C48B71A1553D8FFF5DBD816D /* Pods-zoray.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zoray.release.xcconfig"; path = "Target Support Files/Pods-zoray/Pods-zoray.release.xcconfig"; sourceTree = "<group>"; };
@@ -76,6 +77,11 @@
 			isa = PBXGroup;
 			children = (
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		17D60A24300A439900281BAC /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -151,6 +157,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 17D60A24300A439900281BAC /* Products */;
+					ProjectRef = 17D609FC300A439900281BAC /* Pods.xcodeproj */;
+				},
+				{
 					ProductGroup = 17D607143007264700281BAC /* Products */;
 					ProjectRef = 17D606ED3007264700281BAC /* Pods.xcodeproj */;
 				},
@@ -181,9 +191,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zoray/Pods-zoray-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zoray/Pods-zoray-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -233,8 +247,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = zoray/zoray.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = 6NUFR97X3A;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = zoray/Info.plist;
@@ -251,7 +265,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.myfy.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zorayChan.shineSuper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -275,8 +289,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = zoray/zoray.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = 6NUFR97X3A;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = zoray/Info.plist;
@@ -293,7 +307,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.myfy.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zorayChan.shineSuper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

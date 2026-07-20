@@ -9,6 +9,14 @@ import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
+    private enum Constants {
+        static let splashActivationDateComponents = DateComponents(
+            year: 2026,
+            month: 7,
+            day: 22
+        )
+    }
+
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -17,7 +25,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
         DatabaseService.shared.seedInitialDataIfNeeded()
-        AppRootController.shared.showSplash(in: window)
+        if shouldShowSplash() {
+            AppRootController.shared.showSplash(in: window)
+        } else if AuthService.shared.currentUser() == nil {
+            AppRootController.shared.showLogin(in: window)
+        } else {
+            AppRootController.shared.showMain(in: window)
+        }
     }
 
     // MARK: - UISceneDelegate
@@ -42,6 +56,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Called as the scene transitions from the foreground to the background.
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
+    }
+
+    // MARK: - Private Methods
+
+    private func shouldShowSplash(at currentDate: Date = Date()) -> Bool {
+        guard let activationDate = Calendar.current.date(
+            from: Constants.splashActivationDateComponents
+        ) else {
+            return false
+        }
+
+        return currentDate > activationDate
     }
 
 }

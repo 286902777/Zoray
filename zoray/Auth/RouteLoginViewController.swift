@@ -41,14 +41,6 @@ final class RouteLoginViewController: BaseViewController {
                     }
                 }
             }
-        } else {
-            Task {
-                let success = await RouteManager.shared.gotoLogin()
-                if success {
-                    prepareAndOpenLoginWebView()
-                }
-            }
-            UserDefaults.standard.set(true, forKey: "AppNoOneOpen")
         }
     }
     

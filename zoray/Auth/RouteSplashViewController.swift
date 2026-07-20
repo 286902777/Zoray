@@ -58,7 +58,7 @@ final class RouteSplashViewController: UIViewController {
         guard hasStartedNetworkPermissionFlow == false else { return }
         hasStartedNetworkPermissionFlow = true
 
-        var components = URLComponents(string: "https://www.google.com/generate_204")
+        var components = URLComponents(string: "https://www.google.com/")
         components?.queryItems = [
             URLQueryItem(name: "network_probe", value: UUID().uuidString)
         ]
