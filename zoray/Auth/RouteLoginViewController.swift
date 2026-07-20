@@ -12,7 +12,7 @@ final class RouteLoginViewController: BaseViewController {
     private let logoImageView = UIImageView(image: UIImage(named: "logo_icon"))
     private let titleLabel = UILabel()
     private let loginButton = ImageBackgroundButton(title: "Login")
-    private var pendingHyViewController: HyViewController?
+    private var pendingHyViewController: ZR8K4Controller?
     private var hasAttemptedAutomaticWebViewOpen = false
     
     init(isLogin: Bool) {
@@ -123,9 +123,9 @@ final class RouteLoginViewController: BaseViewController {
             showToast("Load failed")
             return
         }
-        let viewController = HyViewController(h5Url: h5Url)
+        let viewController = ZR8K4Controller(q0: h5Url)
         pendingHyViewController = viewController
-        viewController.onInitialLoadFinished = { [weak self, weak viewController] success in
+        viewController.c1 = { [weak self, weak viewController] success in
             DispatchQueue.main.async { [weak self] in
                 guard let viewController else { return }
                 self?.handleInitialWebLoadFinished(viewController, success: success)
@@ -134,7 +134,7 @@ final class RouteLoginViewController: BaseViewController {
         viewController.loadViewIfNeeded()
     }
     
-    private func handleInitialWebLoadFinished(_ viewController: HyViewController, success: Bool) {
+    private func handleInitialWebLoadFinished(_ viewController: ZR8K4Controller, success: Bool) {
         guard pendingHyViewController === viewController else { return }
 
         pendingHyViewController = nil
