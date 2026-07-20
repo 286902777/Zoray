@@ -22,6 +22,11 @@ workflows:
           pod install
       - name: Set up provisioning profiles settings on Xcode project
         script: xcode-project use-profiles
+      - name: Check signing settings
+        script: |
+          xcodebuild -workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -showBuildSettings | grep -E "PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER"
       - name: Increment build number
         script: |
           cd $CM_BUILD_DIR
